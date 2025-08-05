@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Manutenções - Seja Fibra</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/style.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+                    <div class="container-fluid">
+                        <a class="navbar-brand" href="#">Seja Fibra - Manutenções</a>
+                        <div class="d-flex">
+                            <span id="userEmail" class="text-white me-3"></span>
+                            <button id="logoutBtn" class="btn btn-outline-light">Sair</button>
+                        </div>
+                    </div>
+                </nav>
+            </div>
+        </div>
+
+        <div class="row mt-3">
+            <div class="col-md-12">
+                <ul class="nav nav-tabs" id="myTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="maintenance-tab" data-bs-toggle="tab" data-bs-target="#maintenance" type="button" role="tab">Registrar Manutenção</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="statistics-tab" data-bs-toggle="tab" data-bs-target="#statistics" type="button" role="tab">Estatísticas e Descontos</button>
+                    </li>
+                </ul>
+                <div class="tab-content p-3 border border-top-0 rounded-bottom" id="myTabContent">
+                    <div class="tab-pane fade show active" id="maintenance" role="tabpanel">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h4>Nova Manutenção</h4>
+                                <form id="maintenanceForm">
+                                    <div class="mb-3">
+                                        <label for="neighborhood" class="form-label">Bairro</label>
+                                        <input type="text" class="form-control" id="neighborhood" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="city" class="form-label">Cidade</label>
+                                        <input type="text" class="form-control" id="city" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="problemType" class="form-label">Tipo de Problema</label>
+                                        <select class="form-select" id="problemType" required>
+                                            <option value="Geral">Geral</option>
+                                            <option value="Internet">Internet</option>
+                                            <option value="TV">TV</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="responsible" class="form-label">Responsável</label>
+                                        <input type="text" class="form-control" id="responsible" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="startDate" class="form-label">Data/Hora Início</label>
+                                        <input type="datetime-local" class="form-control" id="startDate" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="endDate" class="form-label">Data/Hora Fim (opcional)</label>
+                                        <input type="datetime-local" class="form-control" id="endDate">
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">Registrar</button>
+                                </form>
+                            </div>
+                            <div class="col-md-6">
+                                <h4>Últimas Manutenções</h4>
+                                <div class="table-responsive">
+                                    <table class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Bairro</th>
+                                                <th>Tipo</th>
+                                                <th>Início</th>
+                                                <th>Fim</th>
+                                                <th>Duração</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="maintenanceList">
+                                            <!-- Lista será preenchida via JavaScript -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="statistics" role="tabpanel">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h4>Filtros</h4>
+                                <form id="statisticsForm">
+                                    <div class="mb-3">
+                                        <label for="filterNeighborhood" class="form-label">Bairro</label>
+                                        <input type="text" class="form-control" id="filterNeighborhood">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="filterProblemType" class="form-label">Tipo de Problema</label>
+                                        <select class="form-select" id="filterProblemType">
+                                            <option value="Todos">Todos</option>
+                                            <option value="Geral">Geral</option>
+                                            <option value="Internet">Internet</option>
+                                            <option value="TV">TV</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="startDateFilter" class="form-label">Data Inicial</label>
+                                        <input type="date" class="form-control" id="startDateFilter" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="endDateFilter" class="form-label">Data Final</label>
+                                        <input type="date" class="form-control" id="endDateFilter" required>
+                                    </div>
+                                    
+                                    <h5 class="mt-4">Planos do Cliente</h5>
+                                    <div class="mb-3">
+                                        <label for="tvPlanValue" class="form-label">Valor Plano TV (R$)</label>
+                                        <input type="number" step="0.01" class="form-control" id="tvPlanValue" value="39.00">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="internetPlanValue" class="form-label">Valor Plano Internet (R$)</label>
+                                        <input type="number" step="0.01" class="form-control" id="internetPlanValue" value="89.00">
+                                    </div>
+                                    
+                                    <h5 class="mt-4">Problemas Avulsos</h5>
+                                    <div id="additionalIssues">
+                                        <!-- Problemas avulsos serão adicionados aqui -->
+                                    </div>
+                                    <button type="button" id="addIssueBtn" class="btn btn-secondary mt-2">Adicionar Problema Avulso</button>
+                                    
+                                    <button type="submit" class="btn btn-primary mt-3">Calcular</button>
+                                </form>
+                            </div>
+                            <div class="col-md-6">
+                                <h4>Resultados</h4>
+                                <div id="resultsContainer">
+                                    <div class="card mb-3">
+                                        <div class="card-header bg-primary text-white">
+                                            Estatísticas de Manutenção
+                                        </div>
+                                        <div class="card-body">
+                                            <div id="maintenanceStats">
+                                                <p>Selecione os filtros e clique em Calcular para ver os resultados.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="card">
+                                        <div class="card-header bg-success text-white">
+                                            Cálculo de Descontos
+                                        </div>
+                                        <div class="card-body">
+                                            <div id="discountResults">
+                                                <p>Selecione os filtros e clique em Calcular para ver os resultados.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="loadingModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-body text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Carregando...</span>
+                    </div>
+                    <p class="mt-2">Processando...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/firebaseConfig.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/maintenance.js"></script>
+    <script src="js/statistics.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
