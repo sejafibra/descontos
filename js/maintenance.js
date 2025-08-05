@@ -1,9 +1,8 @@
 // Configuração de cidades e bairros
 const CIDADES_E_BAIRROS = {
-    "São Paulo": ["Jardins", "Moema", "Vila Mariana", "Itaim Bibi"],
-    "Rio de Janeiro": ["Copacabana", "Ipanema", "Leblon", "Barra da Tijuca"],
-    "Belo Horizonte": ["Savassi", "Lourdes", "Funcionários", "Sion"]
-};
+    "Caraguá": ["Centro", "Caputera", "Olaria", "Sumaré", "Massaguaçú"],
+    "Ubatuba": ["Centro", "Perequê-Açú", "Itaguá", "Ipiranguinha"],
+    };
 
 // Autocomplete para bairros
 document.getElementById('city').addEventListener('change', function() {
