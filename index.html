@@ -3,215 +3,663 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Manutenções - Seja Fibra</title>
+    <title>Sistema de Manutenções</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="css/style.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .additional-issue {
+            background-color: #f8f9fa;
+            margin-bottom: 15px;
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid #dee2e6;
+        }
+        .nav-tabs .nav-link.active {
+            font-weight: bold;
+        }
+        .card-header {
+            font-weight: bold;
+        }
+        .table-responsive {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        #maintenanceList tr:hover {
+            background-color: #f1f1f1;
+        }
+        .remove-issue {
+            padding: 0.15rem 0.5rem;
+            font-size: 0.8rem;
+            margin-bottom: 0.5rem;
+        }
+        .edit-btn {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.8rem;
+        }
+        .additional-issue .row {
+            align-items: flex-end;
+        }
+        .additional-issue label {
+            margin-bottom: 0.3rem;
+            font-size: 0.9rem;
+        }
+        .btn-primary {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+        }
+        .btn-primary:hover {
+            background-color: #0b5ed7;
+            border-color: #0a58ca;
+        }
+        #userEmail {
+            align-self: center;
+        }
+        @media (max-width: 768px) {
+            .tab-content {
+                padding: 10px !important;
+            }
+            .row {
+                margin-left: -5px;
+                margin-right: -5px;
+            }
+            .col-md-6, .col-md-12 {
+                padding-left: 5px;
+                padding-right: 5px;
+            }
+        }
+        .spinner-border {
+            display: inline-block;
+            width: 1rem;
+            height: 1rem;
+            vertical-align: text-bottom;
+            border: 0.2em solid currentColor;
+            border-right-color: transparent;
+            border-radius: 50%;
+            animation: spinner-border .75s linear infinite;
+        }
+        @keyframes spinner-border {
+            to { transform: rotate(360deg); }
+        }
+    </style>
 </head>
 <body>
     <div class="container-fluid">
-        <div class="row">
-            <div class="col-md-12">
-                <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-                    <div class="container-fluid">
-                        <a class="navbar-brand" href="#">Seja Fibra - Manutenções</a>
-                        <div class="d-flex">
-                            <span id="userEmail" class="text-white me-3"></span>
-                            <button id="logoutBtn" class="btn btn-outline-light">Sair</button>
-                        </div>
-                    </div>
-                </nav>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="#">Sistema de Manutenções</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav me-auto">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="#register-tab" data-bs-toggle="tab">Registrar</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#list-tab" data-bs-toggle="tab">Listagem</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#statistics-tab" data-bs-toggle="tab">Estatísticas</a>
+                        </li>
+                    </ul>
+                    <span id="userEmail" class="text-white me-3"></span>
+                    <button id="logoutBtn" class="btn btn-outline-light">Sair</button>
+                </div>
             </div>
-        </div>
+        </nav>
 
-        <div class="row mt-3">
-            <div class="col-md-12">
-                <ul class="nav nav-tabs" id="myTab" role="tablist">
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="maintenance-tab" data-bs-toggle="tab" data-bs-target="#maintenance" type="button" role="tab">Registrar Manutenção</button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="statistics-tab" data-bs-toggle="tab" data-bs-target="#statistics" type="button" role="tab">Estatísticas e Descontos</button>
-                    </li>
-                </ul>
-                <div class="tab-content p-3 border border-top-0 rounded-bottom" id="myTabContent">
-                    <div class="tab-pane fade show active" id="maintenance" role="tabpanel">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <h4>Nova Manutenção</h4>
-                                <form id="maintenanceForm">
-                                    <select id="maintenanceCity" class="form-select" required>
-        <!-- Populado via JavaScript -->
-    </select>
-    
-    <select id="maintenanceNeighborhood" class="form-select" required disabled>
-        <!-- Populado via JavaScript -->
-    </select>
-                                    <input type="hidden" name="docId">
-                                    <div class="mb-3">
-                                        <label for="city" class="form-label">Cidade</label>
-                                        <select class="form-select" id="city" required>
-                                            <option value="">Selecione uma cidade</option>
-                                            <option value="Caraguá">Caraguá</option>
-                                            <option value="Ubatuba">Ubatuba</option>
-                                            </select>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="neighborhood" class="form-label">Bairro</label>
-                                        <select class="form-select" id="neighborhood" required disabled>
-                                            <option value="">Selecione primeiro a cidade</option>
-                                        </select>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="problemType" class="form-label">Tipo de Problema</label>
-                                        <select class="form-select" id="problemType" required>
-                                            <option value="Geral">Geral</option>
-                                            <option value="Internet">Internet</option>
-                                            <option value="TV">TV</option>
-                                        </select>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="responsible" class="form-label">Responsável</label>
-                                        <input type="text" class="form-control" id="responsible" required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="startDate" class="form-label">Data/Hora Início</label>
-                                        <input type="datetime-local" class="form-control" id="startDate" required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="endDate" class="form-label">Data/Hora Fim (opcional)</label>
-                                        <input type="datetime-local" class="form-control" id="endDate">
-                                    </div>
-                                    <button type="submit" class="btn btn-primary" id="submitBtn">Registrar</button>
-                                </form>
-                                <table class="table">
-    <tbody id="maintenanceList">
-        <!-- Populado via JavaScript -->
-    </tbody>
-</table>
-                            </div>
-                            <div class="col-md-6">
-                                <h4>Últimas Manutenções</h4>
-                                <div class="table-responsive">
-                                    <table class="table table-striped">
-                                        <thead>
-                                            <tr>
-                                                <th>Bairro</th>
-                                                <th>Tipo</th>
-                                                <th>Início</th>
-                                                <th>Fim</th>
-                                                <th>Duração</th>
-                                                <th>Ações</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="maintenanceList">
-                                            <!-- Lista será preenchida via JavaScript -->
-                                        </tbody>
-                                    </table>
+        <div class="tab-content">
+            <!-- Aba de Registro -->
+            <div class="tab-pane fade show active" id="register-tab">
+                <div class="card">
+                    <div class="card-header">Registrar Manutenção</div>
+                    <div class="card-body">
+                        <form id="maintenanceForm">
+                            <input type="hidden" name="docId" value="">
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-4">
+                                    <label for="maintenanceCity" class="form-label">Cidade</label>
+                                    <select class="form-select" id="maintenanceCity" required>
+                                        <option value="" disabled selected>Selecione uma cidade</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="maintenanceNeighborhood" class="form-label">Bairro</label>
+                                    <select class="form-select" id="maintenanceNeighborhood" disabled required>
+                                        <option value="" disabled selected>Selecione um bairro</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="problemType" class="form-label">Tipo de Problema</label>
+                                    <select class="form-select" id="problemType" name="problemType" required>
+                                        <option value="" disabled selected>Selecione o tipo</option>
+                                        <option value="TV">TV</option>
+                                        <option value="Internet">Internet</option>
+                                        <option value="Geral">Geral</option>
+                                    </select>
                                 </div>
                             </div>
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-4">
+                                    <label for="responsible" class="form-label">Responsável</label>
+                                    <input type="text" class="form-control" id="responsible" name="responsible" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="startDate" class="form-label">Data/Hora Início</label>
+                                    <input type="datetime-local" class="form-control" id="startDate" name="startDate" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="endDate" class="form-label">Data/Hora Fim (opcional)</label>
+                                    <input type="datetime-local" class="form-control" id="endDate" name="endDate">
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Registrar</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Aba de Listagem -->
+            <div class="tab-pane fade" id="list-tab">
+                <div class="card">
+                    <div class="card-header">Últimas Manutenções</div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Bairro</th>
+                                        <th>Tipo</th>
+                                        <th>Início</th>
+                                        <th>Fim</th>
+                                        <th>Duração</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="maintenanceList">
+                                    <!-- Dados serão carregados via JavaScript -->
+                                </tbody>
+                            </table>
                         </div>
                     </div>
+                </div>
+            </div>
 
-                    <div class="tab-pane fade" id="statistics" role="tabpanel">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <h4>Filtros</h4>
-                                <form id="statisticsForm">
-                                    <div class="mb-3">
-                                        <label for="filterNeighborhood" class="form-label">Bairro</label>
-                                        <input type="text" class="form-control" id="filterNeighborhood">
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="filterProblemType" class="form-label">Tipo de Problema</label>
-                                        <select class="form-select" id="filterProblemType">
-                                            <option value="Todos">Todos</option>
-                                            <option value="Geral">Geral</option>
-                                            <option value="Internet">Internet</option>
-                                            <option value="TV">TV</option>
-                                        </select>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="startDateFilter" class="form-label">Data Inicial</label>
-                                        <input type="date" class="form-control" id="startDateFilter" required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="endDateFilter" class="form-label">Data Final</label>
-                                        <input type="date" class="form-control" id="endDateFilter" required>
-                                    </div>
-                                    
-                                    <h5 class="mt-4">Planos do Cliente</h5>
-                                    <div class="mb-3">
-                                        <label for="tvPlanValue" class="form-label">Valor Plano TV (R$)</label>
-                                        <input type="number" step="0.01" class="form-control" id="tvPlanValue" value="39.00">
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="internetPlanValue" class="form-label">Valor Plano Internet (R$)</label>
-                                        <input type="number" step="0.01" class="form-control" id="internetPlanValue" value="89.00">
-                                    </div>
-                                    
-                                    <h5 class="mt-4">Problemas Avulsos</h5>
-                                    <div id="additionalIssues">
-                                        <!-- Problemas avulsos serão adicionados aqui -->
-                                    </div>
-                                    <button type="button" id="addIssueBtn" class="btn btn-secondary mt-2">Adicionar Problema Avulso</button>
-                                    
-                                    <button type="submit" class="btn btn-primary mt-3">Calcular</button>
-                                </form>
-                            </div>
-                            <div class="col-md-6">
-                                <h4>Resultados</h4>
-                                <div id="resultsContainer">
-                                    <div class="card mb-3">
-                                        <div class="card-header bg-primary text-white">
-                                            Estatísticas de Manutenção
-                                        </div>
-                                        <div class="card-body">
-                                            <div id="maintenanceStats">
-                                                <p>Selecione os filtros e clique em Calcular para ver os resultados.</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="card">
-                                        <div class="card-header bg-success text-white">
-                                            Cálculo de Descontos
-                                        </div>
-                                        <div class="card-body">
-                                            <div id="discountResults">
-                                                <p>Selecione os filtros e clique em Calcular para ver os resultados.</p>
-                                            </div>
-                                        </div>
-                                    </div>
+            <!-- Aba de Estatísticas -->
+            <div class="tab-pane fade" id="statistics-tab">
+                <div class="card">
+                    <div class="card-header">Cálculo de Descontos</div>
+                    <div class="card-body">
+                        <form id="statisticsForm">
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-3">
+                                    <label for="startDateFilter" class="form-label">Data Inicial</label>
+                                    <input type="date" class="form-control" id="startDateFilter" required>
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="endDateFilter" class="form-label">Data Final</label>
+                                    <input type="date" class="form-control" id="endDateFilter" required>
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="filterNeighborhood" class="form-label">Bairro (opcional)</label>
+                                    <input type="text" class="form-control" id="filterNeighborhood">
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="filterProblemType" class="form-label">Tipo de Problema</label>
+                                    <select class="form-select" id="filterProblemType">
+                                        <option value="Todos">Todos</option>
+                                        <option value="TV">TV</option>
+                                        <option value="Internet">Internet</option>
+                                        <option value="Geral">Geral</option>
+                                    </select>
                                 </div>
                             </div>
-                        </div>
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-4">
+                                    <label for="tvPlanValue" class="form-label">Valor Mensal TV (R$)</label>
+                                    <input type="number" step="0.01" class="form-control" id="tvPlanValue" value="89.90">
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="internetPlanValue" class="form-label">Valor Mensal Internet (R$)</label>
+                                    <input type="number" step="0.01" class="form-control" id="internetPlanValue" value="99.90">
+                                </div>
+                                <div class="col-md-4 d-flex align-items-end">
+                                    <button type="button" id="addIssueBtn" class="btn btn-secondary">Adicionar Problema Avulso</button>
+                                </div>
+                            </div>
+                            <div id="additionalIssues" class="mb-3">
+                                <!-- Problemas avulsos serão adicionados aqui -->
+                            </div>
+                            <button type="submit" class="btn btn-primary">Calcular</button>
+                        </form>
+                        <div id="maintenanceStats" class="mt-4"></div>
+                        <div id="discountResults" class="mt-4"></div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="modal fade" id="loadingModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
-        <div class="modal-dialog">
+    <!-- Modal de Carregamento -->
+    <div class="modal fade" id="loadingModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-body text-center">
-                    <div class="spinner-border text-primary" role="status">
+                <div class="modal-body text-center p-4">
+                    <div class="spinner-border text-primary mb-3" role="status">
                         <span class="visually-hidden">Carregando...</span>
                     </div>
-                    <p class="mt-2">Processando...</p>
+                    <p>Processando, por favor aguarde...</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="js/firebaseConfig.js"></script>
-    <script src="js/auth.js"></script>
-    <script src="js/maintenance.js"></script>
-    <script src="js/statistics.js"></script>
-    <script src="js/app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script>
+        // Configuração do Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyC95aDwbm43uv7UPB7YDT5VjCe5USz2mZ8",
+            authDomain: "descontos-4ab4b.firebaseapp.com",
+            projectId: "descontos-4ab4b",
+            storageBucket: "descontos-4ab4b.appspot.com",
+            messagingSenderId: "907559767912",
+            appId: "1:907559767912:web:d9974a77e46a5ef08ed0dd"
+        };
+
+        // Inicializa o Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // Dados de cidades e bairros (pode ser migrado para o Firestore depois)
+        const MAINTENANCE_DATA = {
+            cities: {
+                "Caraguá": ["Centro", "Caputera", "Olaria", "Sumaré", "Massaguaçú"],
+                "Ubatuba": ["Centro", "Perequê-Açú", "Itaguá", "Ipiranguinha"]
+            }
+        };
+
+        // Variável para controle de problemas avulsos
+        let issueCount = 0;
+
+        // Inicialização quando o DOM estiver pronto
+        document.addEventListener('DOMContentLoaded', () => {
+            // Verifica autenticação
+            auth.onAuthStateChanged((user) => {
+                if (!user || !['atendente@sejafibra.net', 'supervisor@sejafibra.net', 'bioranss@gmail.com'].includes(user.email)) {
+                    window.location.href = 'login.html';
+                } else {
+                    document.getElementById('userEmail').textContent = user.email;
+                    setupMaintenanceSystem();
+                    setupStatistics();
+                    loadMaintenances();
+                }
+            });
+
+            // Configura logout
+            document.getElementById('logoutBtn').addEventListener('click', () => {
+                auth.signOut().then(() => {
+                    window.location.href = 'login.html';
+                });
+            });
+
+            // Inicializa tooltips
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        });
+
+        // Configuração do sistema de manutenções
+        function setupMaintenanceSystem() {
+            const citySelect = document.getElementById('maintenanceCity');
+            const neighborhoodSelect = document.getElementById('maintenanceNeighborhood');
+            const form = document.getElementById('maintenanceForm');
+
+            // Popula cidades
+            citySelect.innerHTML = '<option value="" disabled selected>Selecione uma cidade</option>';
+            Object.keys(MAINTENANCE_DATA.cities).forEach(city => {
+                citySelect.add(new Option(city, city));
+            });
+
+            // Evento de mudança de cidade
+            citySelect.addEventListener('change', () => {
+                neighborhoodSelect.innerHTML = '<option value="" disabled selected>Selecione um bairro</option>';
+                neighborhoodSelect.disabled = !citySelect.value;
+
+                if (citySelect.value && MAINTENANCE_DATA.cities[citySelect.value]) {
+                    MAINTENANCE_DATA.cities[citySelect.value].forEach(neighborhood => {
+                        neighborhoodSelect.add(new Option(neighborhood, neighborhood));
+                    });
+                }
+            });
+
+            // Evento de submit do formulário
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const submitBtn = form.querySelector('button[type="submit"]');
+                
+                try {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Salvando...';
+
+                    const maintenanceData = {
+                        city: citySelect.value,
+                        neighborhood: neighborhoodSelect.value,
+                        problemType: form.problemType.value,
+                        responsible: form.responsible.value,
+                        startDate: firebase.firestore.Timestamp.fromDate(new Date(form.startDate.value)),
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        createdBy: auth.currentUser.email,
+                        status: form.endDate.value ? 'Concluído' : 'Pendente'
+                    };
+
+                    if (form.endDate.value) {
+                        maintenanceData.endDate = firebase.firestore.Timestamp.fromDate(new Date(form.endDate.value));
+                        maintenanceData.duration = Math.round(
+                            (new Date(form.endDate.value) - new Date(form.startDate.value)) / (1000 * 60)
+                        );
+                    }
+
+                    if (form.docId.value) {
+                        await db.collection('maintenances').doc(form.docId.value).update(maintenanceData);
+                        alert('Manutenção atualizada com sucesso!');
+                    } else {
+                        await db.collection('maintenances').add(maintenanceData);
+                        alert('Manutenção cadastrada com sucesso!');
+                    }
+
+                    form.reset();
+                    form.docId.value = '';
+                    submitBtn.textContent = form.docId.value ? 'Atualizar' : 'Registrar';
+                    await loadMaintenances();
+
+                } catch (error) {
+                    console.error('Erro ao salvar:', error);
+                    alert(`Erro: ${error.message}`);
+                } finally {
+                    submitBtn.disabled = false;
+                }
+            });
+
+            // Define data/hora atual como padrão
+            const now = new Date();
+            const nowStr = now.toISOString().slice(0, 16);
+            document.getElementById('startDate').value = nowStr;
+        }
+
+        // Carregar manutenções
+        const loadMaintenances = async () => {
+            try {
+                const snapshot = await db.collection('maintenances')
+                    .orderBy('startDate', 'desc')
+                    .limit(20)
+                    .get();
+
+                const tbody = document.getElementById('maintenanceList');
+                tbody.innerHTML = '';
+
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${data.neighborhood}</td>
+                            <td>${data.problemType}</td>
+                            <td>${data.startDate.toDate().toLocaleString('pt-BR')}</td>
+                            <td>${data.endDate ? data.endDate.toDate().toLocaleString('pt-BR') : '-'}</td>
+                            <td>${data.duration ? `${Math.floor(data.duration/60)}h ${data.duration%60}m` : 'Em andamento'}</td>
+                            <td><button class="btn btn-sm btn-outline-primary edit-btn" data-id="${doc.id}">Editar</button></td>
+                        </tr>
+                    `;
+                });
+
+                // Configurar botões de edição
+                document.querySelectorAll('.edit-btn').forEach(btn => {
+                    btn.addEventListener('click', async () => {
+                        const doc = await db.collection('maintenances').doc(btn.dataset.id).get();
+                        const data = doc.data();
+
+                        document.getElementById('maintenanceCity').value = data.city;
+                        
+                        // Dispara o evento change para carregar os bairros
+                        document.getElementById('maintenanceCity').dispatchEvent(new Event('change'));
+                        
+                        // Aguarda um momento para garantir que os bairros foram carregados
+                        setTimeout(() => {
+                            document.getElementById('maintenanceNeighborhood').value = data.neighborhood;
+                            document.getElementById('problemType').value = data.problemType;
+                            document.getElementById('responsible').value = data.responsible;
+                            document.getElementById('startDate').value = data.startDate.toDate().toISOString().slice(0,16);
+                            document.getElementById('endDate').value = data.endDate?.toDate().toISOString().slice(0,16) || '';
+                            document.maintenanceForm.docId.value = doc.id;
+                            document.querySelector('#maintenanceForm button[type="submit"]').textContent = 'Atualizar';
+                            
+                            // Navega para a aba de registro
+                            new bootstrap.Tab(document.querySelector('#register-tab')).show();
+                        }, 100);
+                    });
+                });
+
+            } catch (error) {
+                console.error('Erro ao carregar:', error);
+                document.getElementById('maintenanceList').innerHTML = `
+                    <tr><td colspan="6" class="text-center text-danger">Erro ao carregar manutenções</td></tr>
+                `;
+            }
+        };
+
+        // Configuração do sistema de estatísticas
+        function setupStatistics() {
+            // Inicializa datas padrão
+            const today = new Date();
+            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+            
+            document.getElementById('startDateFilter').valueAsDate = firstDay;
+            document.getElementById('endDateFilter').valueAsDate = today;
+
+            // Configura botão para adicionar problemas avulsos
+            document.getElementById('addIssueBtn').addEventListener('click', addAdditionalIssue);
+
+            // Evento de submit do formulário de estatísticas
+            document.getElementById('statisticsForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
+                loadingModal.show();
+
+                try {
+                    // Processa filtros
+                    const startDate = new Date(document.getElementById('startDateFilter').value);
+                    const endDate = new Date(document.getElementById('endDateFilter').value);
+                    endDate.setHours(23, 59, 59, 999);
+
+                    // Coleta problemas avulsos
+                    const additionalIssues = Array.from(document.querySelectorAll('.additional-issue')).map(issue => {
+                        return {
+                            type: issue.querySelector('.issue-type').value,
+                            start: new Date(issue.querySelector('.issue-start').value),
+                            end: new Date(issue.querySelector('.issue-end').value)
+                        };
+                    });
+
+                    // Consulta manutenções no Firebase
+                    let query = db.collection('maintenances')
+                        .where('startDate', '>=', firebase.firestore.Timestamp.fromDate(startDate))
+                        .where('startDate', '<=', firebase.firestore.Timestamp.fromDate(endDate));
+
+                    const neighborhood = document.getElementById('filterNeighborhood').value.trim();
+                    if (neighborhood) query = query.where('neighborhood', '==', neighborhood);
+
+                    const problemType = document.getElementById('filterProblemType').value;
+                    if (problemType !== 'Todos') query = query.where('problemType', '==', problemType);
+
+                    const snapshot = await query.get();
+
+                    // Processa resultados
+                    const results = { tv: 0, internet: 0, geral: 0 }; // em minutos
+
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        const duration = data.duration || 0;
+                        results[data.problemType.toLowerCase()] += duration;
+                    });
+
+                    // Adiciona problemas avulsos
+                    additionalIssues.forEach(issue => {
+                        const duration = (issue.end - issue.start) / (1000 * 60);
+                        results[issue.type.toLowerCase()] += duration;
+                    });
+
+                    // Calcula descontos
+                    const tvPlanValue = parseFloat(document.getElementById('tvPlanValue').value) || 0;
+                    const internetPlanValue = parseFloat(document.getElementById('internetPlanValue').value) || 0;
+
+                    const tvHours = (results.tv + results.geral) / 60;
+                    const internetHours = (results.internet + results.geral) / 60;
+
+                    const discounts = {
+                        tv: tvHours * (tvPlanValue / (30 * 24)),
+                        internet: internetHours * (internetPlanValue / (30 * 24)),
+                        total: 0
+                    };
+                    discounts.total = discounts.tv + discounts.internet;
+
+                    // Exibe resultados
+                    displayResults(results, discounts);
+                } catch (error) {
+                    console.error("Erro ao calcular:", error);
+                    document.getElementById('maintenanceStats').innerHTML = `
+                        <div class="alert alert-danger">Erro ao processar: ${error.message}</div>
+                    `;
+                } finally {
+                    loadingModal.hide();
+                }
+            });
+        }
+
+        // Adiciona novo problema avulso
+        function addAdditionalIssue() {
+            if (issueCount >= 5) {
+                alert('Máximo de 5 problemas avulsos atingido!');
+                return;
+            }
+
+            issueCount++;
+            const issueDiv = document.createElement('div');
+            issueDiv.className = 'additional-issue mb-3 p-3 border rounded';
+            issueDiv.innerHTML = `
+                <h6>Problema Avulso ${issueCount}</h6>
+                <div class="row g-2 align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label mb-1">Tipo</label>
+                        <select class="form-select issue-type">
+                            <option value="TV">TV</option>
+                            <option value="Internet">Internet</option>
+                            <option value="Geral">Geral</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label mb-1">Data/Hora Abertura</label>
+                        <input type="datetime-local" class="form-control issue-start" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label mb-1">Data/Hora Execução</label>
+                        <input type="datetime-local" class="form-control issue-end" required>
+                    </div>
+                    <div class="col-md-1">
+                        <button type="button" class="btn btn-danger btn-sm remove-issue">X</button>
+                    </div>
+                </div>
+            `;
+
+            issueDiv.querySelector('.remove-issue').addEventListener('click', () => {
+                issueDiv.remove();
+                issueCount--;
+            });
+
+            document.getElementById('additionalIssues').appendChild(issueDiv);
+        }
+
+        // Exibe os resultados na tela
+        function displayResults(results, discounts) {
+            // Estatísticas
+            document.getElementById('maintenanceStats').innerHTML = `
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card bg-light mb-3">
+                            <div class="card-header">TV</div>
+                            <div class="card-body">
+                                <p class="card-text">Tempo total: ${formatHours((results.tv + results.geral) / 60)}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-light mb-3">
+                            <div class="card-header">Internet</div>
+                            <div class="card-body">
+                                <p class="card-text">Tempo total: ${formatHours((results.internet + results.geral) / 60)}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-light mb-3">
+                            <div class="card-header">Geral</div>
+                            <div class="card-body">
+                                <p class="card-text">Tempo total: ${formatHours(results.geral / 60)}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Descontos
+            document.getElementById('discountResults').innerHTML = `
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Serviço</th>
+                            <th>Tempo</th>
+                            <th>Valor/Hora</th>
+                            <th>Desconto</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>TV</td>
+                            <td>${formatHours((results.tv + results.geral) / 60)}</td>
+                            <td>R$ ${(discounts.tv / ((results.tv + results.geral) / 60)).toFixed(4)}</td>
+                            <td>R$ ${discounts.tv.toFixed(2)}</td>
+                        </tr>
+                        <tr>
+                            <td>Internet</td>
+                            <td>${formatHours((results.internet + results.geral) / 60)}</td>
+                            <td>R$ ${(discounts.internet / ((results.internet + results.geral) / 60)).toFixed(4)}</td>
+                            <td>R$ ${discounts.internet.toFixed(2)}</td>
+                        </tr>
+                        <tr class="table-success fw-bold">
+                            <td colspan="3">Total</td>
+                            <td>R$ ${discounts.total.toFixed(2)}</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="alert alert-info mt-3">
+                    <strong>Observação:</strong> Problemas do tipo "Geral" afetam 100% do tempo tanto para TV quanto para Internet.
+                </div>
+            `;
+        }
+
+        // Formata horas (ex: 5h 30m)
+        function formatHours(hours) {
+            const h = Math.floor(hours);
+            const m = Math.round((hours - h) * 60);
+            return `${h}h ${m}m`;
+        }
+    </script>
 </body>
 </html>
