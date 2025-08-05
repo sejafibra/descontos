@@ -2,7 +2,7 @@
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-// Dados atualizados de cidades e bairros
+// Dados atualizados de cidades e bairros (CORRIGIDO O NOME DA CONSTANTE)
 const CIDADES_E_BAIRROS = {
     "Caraguá": ["Centro", "Caputera", "Olaria", "Sumaré", "Massaguaçú"],
     "Ubatuba": ["Centro", "Perequê-Açú", "Itaguá", "Ipiranguinha"]
@@ -13,8 +13,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const citySelect = document.getElementById('city');
     const neighborhoodSelect = document.getElementById('neighborhood');
 
-    // Limpa e popula as cidades
-    citySelect.innerHTML = '<option value="">Selecione uma cidade</option>';
+    // Limpa e popula as cidades (MELHORADO)
+    citySelect.innerHTML = '';
+    const defaultOption = document.createElement('option');
+    defaultOption.value = '';
+    defaultOption.textContent = 'Selecione uma cidade';
+    citySelect.appendChild(defaultOption);
+
     Object.keys(CIDADES_E_BAIRROS).forEach(cidade => {
         const option = document.createElement('option');
         option.value = cidade;
@@ -22,10 +27,14 @@ document.addEventListener('DOMContentLoaded', () => {
         citySelect.appendChild(option);
     });
 
-    // Configura autocomplete de bairros
+    // Configura autocomplete de bairros (CÓDIGO REVISADO)
     citySelect.addEventListener('change', function() {
-        neighborhoodSelect.innerHTML = '<option value="">Selecione um bairro</option>';
-        
+        neighborhoodSelect.innerHTML = '';
+        const defaultNeighborhoodOption = document.createElement('option');
+        defaultNeighborhoodOption.value = '';
+        defaultNeighborhoodOption.textContent = 'Selecione um bairro';
+        neighborhoodSelect.appendChild(defaultNeighborhoodOption);
+
         if (this.value && CIDADES_E_BAIRROS[this.value]) {
             neighborhoodSelect.disabled = false;
             CIDADES_E_BAIRROS[this.value].forEach(bairro => {
@@ -42,6 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Carrega manutenções ao abrir a página
     loadMaintenances();
 });
+
 // Função para cadastrar/editar manutenções
 document.getElementById('maintenanceForm').addEventListener('submit', async function(e) {
     e.preventDefault();
