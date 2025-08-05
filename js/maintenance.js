@@ -11,18 +11,22 @@ const CIDADES_E_BAIRROS = {
 // Inicialização do formulário
 document.addEventListener('DOMContentLoaded', () => {
     // Configura autocomplete de bairros
-    document.getElementById('city').addEventListener('change', function() {
-        const bairroSelect = document.getElementById('neighborhood');
-        bairroSelect.innerHTML = '<option value="">Selecione um bairro</option>';
-        bairroSelect.disabled = !this.value;
+    const citySelect = document.getElementById('city');
+    const neighborhoodSelect = document.getElementById('neighborhood');
+
+    citySelect.addEventListener('change', function() {
+        neighborhoodSelect.innerHTML = '<option value="">Selecione um bairro</option>';
         
         if (this.value && CIDADES_E_BAIRROS[this.value]) {
+            neighborhoodSelect.disabled = false;
             CIDADES_E_BAIRROS[this.value].forEach(bairro => {
                 const option = document.createElement('option');
                 option.value = bairro;
                 option.textContent = bairro;
-                bairroSelect.appendChild(option);
+                neighborhoodSelect.appendChild(option);
             });
+        } else {
+            neighborhoodSelect.disabled = true;
         }
     });
 
