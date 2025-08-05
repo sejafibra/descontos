@@ -2,18 +2,27 @@
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-// Dados de cidades e bairros
+// Dados atualizados de cidades e bairros
 const CIDADES_E_BAIRROS = {
     "Caraguá": ["Centro", "Caputera", "Olaria", "Sumaré", "Massaguaçú"],
-    "Ubatuba": ["Centro", "Perequê-Açú", "Itaguá", "Ipiranguinha"],
-    };
+    "Ubatuba": ["Centro", "Perequê-Açú", "Itaguá", "Ipiranguinha"]
+};
 
 // Inicialização do formulário
 document.addEventListener('DOMContentLoaded', () => {
-    // Configura autocomplete de bairros
     const citySelect = document.getElementById('city');
     const neighborhoodSelect = document.getElementById('neighborhood');
 
+    // Limpa e popula as cidades
+    citySelect.innerHTML = '<option value="">Selecione uma cidade</option>';
+    Object.keys(CIDADES_E_BAIRROS).forEach(cidade => {
+        const option = document.createElement('option');
+        option.value = cidade;
+        option.textContent = cidade;
+        citySelect.appendChild(option);
+    });
+
+    // Configura autocomplete de bairros
     citySelect.addEventListener('change', function() {
         neighborhoodSelect.innerHTML = '<option value="">Selecione um bairro</option>';
         
@@ -33,7 +42,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Carrega manutenções ao abrir a página
     loadMaintenances();
 });
-
 // Função para cadastrar/editar manutenções
 document.getElementById('maintenanceForm').addEventListener('submit', async function(e) {
     e.preventDefault();
