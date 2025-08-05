@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Manutenções</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <style>
         body {
             background-color: #f8f9fa;
@@ -109,13 +108,13 @@
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav me-auto">
                         <li class="nav-item">
-                            <a class="nav-link active" href="#register-tab" data-bs-toggle="tab">Registrar</a>
+                            <a class="nav-link active" href="#" data-bs-target="#register-tab" data-bs-toggle="tab">Registrar</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#list-tab" data-bs-toggle="tab">Listagem</a>
+                            <a class="nav-link" href="#" data-bs-target="#list-tab" data-bs-toggle="tab">Listagem</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#statistics-tab" data-bs-toggle="tab">Estatísticas</a>
+                            <a class="nav-link" href="#" data-bs-target="#statistics-tab" data-bs-toggle="tab">Estatísticas</a>
                         </li>
                     </ul>
                     <span id="userEmail" class="text-white me-3"></span>
@@ -137,6 +136,8 @@
                                     <label for="maintenanceCity" class="form-label">Cidade</label>
                                     <select class="form-select" id="maintenanceCity" required>
                                         <option value="" disabled selected>Selecione uma cidade</option>
+                                        <option value="Caraguá">Caraguá</option>
+                                        <option value="Ubatuba">Ubatuba</option>
                                     </select>
                                 </div>
                                 <div class="col-md-4">
@@ -293,11 +294,9 @@
         const db = firebase.database();
 
         // Dados de cidades e bairros
-        const MAINTENANCE_DATA = {
-            cities: {
-                "Caraguá": ["Centro", "Caputera", "Olaria", "Sumaré", "Massaguaçú"],
-                "Ubatuba": ["Centro", "Perequê-Açú", "Itaguá", "Ipiranguinha"]
-            }
+        const CITIES_DATA = {
+            "Caraguá": ["Centro", "Caputera", "Olaria", "Sumaré", "Massaguaçú"],
+            "Ubatuba": ["Centro", "Perequê-Açú", "Itaguá", "Ipiranguinha"]
         };
 
         // Variável para controle de problemas avulsos
@@ -320,6 +319,30 @@
             // Verifica conexão
             checkConnection();
 
+            // Configura seleção de cidades/bairros
+            const citySelect = document.getElementById('maintenanceCity');
+            const neighborhoodSelect = document.getElementById('maintenanceNeighborhood');
+            
+            citySelect.addEventListener('change', function() {
+                const selectedCity = this.value;
+                neighborhoodSelect.innerHTML = '<option value="" disabled selected>Selecione um bairro</option>';
+                neighborhoodSelect.disabled = !selectedCity;
+                
+                if (selectedCity && CITIES_DATA[selectedCity]) {
+                    CITIES_DATA[selectedCity].forEach(neighborhood => {
+                        neighborhoodSelect.add(new Option(neighborhood, neighborhood));
+                    });
+                }
+            });
+
+            // Define data/hora atual como padrão
+            const now = new Date();
+            document.getElementById('startDate').value = now.toISOString().slice(0, 16);
+            
+            const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+            document.getElementById('startDateFilter').valueAsDate = firstDay;
+            document.getElementById('endDateFilter').valueAsDate = now;
+
             // Verifica autenticação
             auth.onAuthStateChanged((user) => {
                 if (!user || !['atendente@sejafibra.net', 'supervisor@sejafibra.net', 'bioranss@gmail.com'].includes(user.email)) {
@@ -339,38 +362,20 @@
                 });
             });
 
-            // Inicializa datas padrão
-            const now = new Date();
-            document.getElementById('startDate').value = now.toISOString().slice(0, 16);
-            
-            const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-            document.getElementById('startDateFilter').valueAsDate = firstDay;
-            document.getElementById('endDateFilter').valueAsDate = now;
+            // Configura navegação por tabs
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const target = this.getAttribute('data-bs-target');
+                    const tab = new bootstrap.Tab(target);
+                    tab.show();
+                });
+            });
         });
 
         // Configuração do sistema de manutenções
         function setupMaintenanceSystem() {
-            const citySelect = document.getElementById('maintenanceCity');
-            const neighborhoodSelect = document.getElementById('maintenanceNeighborhood');
             const form = document.getElementById('maintenanceForm');
-
-            // Popula cidades
-            citySelect.innerHTML = '<option value="" disabled selected>Selecione uma cidade</option>';
-            Object.keys(MAINTENANCE_DATA.cities).forEach(city => {
-                citySelect.add(new Option(city, city));
-            });
-
-            // Evento de mudança de cidade
-            citySelect.addEventListener('change', () => {
-                neighborhoodSelect.innerHTML = '<option value="" disabled selected>Selecione um bairro</option>';
-                neighborhoodSelect.disabled = !citySelect.value;
-
-                if (citySelect.value && MAINTENANCE_DATA.cities[citySelect.value]) {
-                    MAINTENANCE_DATA.cities[citySelect.value].forEach(neighborhood => {
-                        neighborhoodSelect.add(new Option(neighborhood, neighborhood));
-                    });
-                }
-            });
 
             // Evento de submit do formulário
             form.addEventListener('submit', async (e) => {
@@ -382,20 +387,21 @@
                     submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Salvando...';
 
                     const maintenanceData = {
-                        city: citySelect.value,
-                        neighborhood: neighborhoodSelect.value,
-                        problemType: form.problemType.value,
-                        responsible: form.responsible.value,
-                        startDate: new Date(form.startDate.value).getTime(),
+                        city: document.getElementById('maintenanceCity').value,
+                        neighborhood: document.getElementById('maintenanceNeighborhood').value,
+                        problemType: document.getElementById('problemType').value,
+                        responsible: document.getElementById('responsible').value,
+                        startDate: new Date(document.getElementById('startDate').value).getTime(),
                         createdAt: Date.now(),
                         createdBy: auth.currentUser.email,
-                        status: form.endDate.value ? 'Concluído' : 'Pendente'
+                        status: document.getElementById('endDate').value ? 'Concluído' : 'Pendente'
                     };
 
-                    if (form.endDate.value) {
-                        maintenanceData.endDate = new Date(form.endDate.value).getTime();
+                    if (document.getElementById('endDate').value) {
+                        maintenanceData.endDate = new Date(document.getElementById('endDate').value).getTime();
                         maintenanceData.duration = Math.round(
-                            (new Date(form.endDate.value) - new Date(form.startDate.value)) / (1000 * 60);
+                            (new Date(document.getElementById('endDate').value) - 
+                             new Date(document.getElementById('startDate').value)) / (1000 * 60);
                     }
 
                     if (form.docId.value) {
@@ -464,8 +470,12 @@
                         const data = snapshot.val();
 
                         document.getElementById('maintenanceCity').value = data.city;
-                        document.getElementById('maintenanceCity').dispatchEvent(new Event('change'));
                         
+                        // Dispara o evento change para carregar os bairros
+                        const event = new Event('change');
+                        document.getElementById('maintenanceCity').dispatchEvent(event);
+                        
+                        // Aguarda um momento para garantir que os bairros foram carregados
                         setTimeout(() => {
                             document.getElementById('maintenanceNeighborhood').value = data.neighborhood;
                             document.getElementById('problemType').value = data.problemType;
@@ -474,7 +484,10 @@
                             document.getElementById('endDate').value = data.endDate ? new Date(data.endDate).toISOString().slice(0,16) : '';
                             document.maintenanceForm.docId.value = snapshot.key;
                             document.querySelector('#maintenanceForm button[type="submit"]').textContent = 'Atualizar';
-                            new bootstrap.Tab(document.querySelector('#register-tab')).show();
+                            
+                            // Navega para a aba de registro
+                            const tab = new bootstrap.Tab('#register-tab');
+                            tab.show();
                         }, 100);
                     });
                 });
