@@ -1,124 +1,77 @@
-// Formulário de manutenção
-document.getElementById('maintenanceForm').addEventListener('submit', (e) => {
-    e.preventDefault();
+// Configuração de cidades e bairros
+const CIDADES_E_BAIRROS = {
+    "São Paulo": ["Jardins", "Moema", "Vila Mariana", "Itaim Bibi"],
+    "Rio de Janeiro": ["Copacabana", "Ipanema", "Leblon", "Barra da Tijuca"],
+    "Belo Horizonte": ["Savassi", "Lourdes", "Funcionários", "Sion"]
+};
+
+// Autocomplete para bairros
+document.getElementById('city').addEventListener('change', function() {
+    const bairroSelect = document.getElementById('neighborhood');
+    bairroSelect.innerHTML = '<option value="">Selecione um bairro</option>';
+    bairroSelect.disabled = !this.value;
     
-    const neighborhood = document.getElementById('neighborhood').value.trim();
-    const city = document.getElementById('city').value.trim();
-    const problemType = document.getElementById('problemType').value;
-    const responsible = document.getElementById('responsible').value.trim();
-    const startDate = document.getElementById('startDate').value;
-    const endDate = document.getElementById('endDate').value;
-    
-    if (!neighborhood || !city || !responsible || !startDate) {
-        alert('Por favor, preencha todos os campos obrigatórios.');
-        return;
+    if (this.value && CIDADES_E_BAIRROS[this.value]) {
+        CIDADES_E_BAIRROS[this.value].forEach(bairro => {
+            const option = document.createElement('option');
+            option.value = bairro;
+            option.textContent = bairro;
+            bairroSelect.appendChild(option);
+        });
     }
-    
-    // Gerar protocolo automático
-    const protocol = 'MAN-' + Date.now();
-    
-    // Calcular duração se endDate estiver preenchido
-    let duration = null;
-    if (endDate) {
-        const start = new Date(startDate);
-        const end = new Date(endDate);
-        
-        if (end <= start) {
-            alert('A data de fim deve ser posterior à data de início.');
-            return;
-        }
-        
-        duration = (end - start) / (1000 * 60); // Duração em minutos
-    }
-    
-    // Mostrar modal de carregamento
-    const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
-    loadingModal.show();
-    
-    // Adicionar ao Firestore
-    db.collection('maintenances').add({
-        neighborhood,
-        city,
-        protocol,
-        problemType,
-        responsible,
-        startDate: new Date(startDate),
-        endDate: endDate ? new Date(endDate) : null,
-        duration,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        createdBy: auth.currentUser.email,
-        status: endDate ? 'Concluído' : 'Em andamento'
-    }).then(() => {
-        alert('Manutenção registrada com sucesso!');
-        document.getElementById('maintenanceForm').reset();
-        loadMaintenances();
-    }).catch((error) => {
-        console.error('Erro ao registrar manutenção:', error);
-        alert('Erro ao registrar manutenção: ' + error.message);
-    }).finally(() => {
-        loadingModal.hide();
-    });
 });
 
-// Carrega as últimas manutenções
-function loadMaintenances() {
-    const maintenanceList = document.getElementById('maintenanceList');
-    maintenanceList.innerHTML = '<tr><td colspan="5" class="text-center">Carregando...</td></tr>';
-    
-    db.collection('maintenances')
-        .orderBy('createdAt', 'desc')
+// Submit do formulário (com feedback visual)
+document.getElementById('maintenanceForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = e.target.querySelector('button[type="submit"]');
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Processando...';
+    btn.disabled = true;
+
+    try {
+        const docId = e.target.docId?.value;
+        const data = {
+            // ... (coleta de dados do formulário)
+            status: document.getElementById('endDate').value ? 'Concluído' : 'Pendente'
+        };
+
+        if (docId) {
+            await db.collection('maintenances').doc(docId).update(data);
+        } else {
+            await db.collection('maintenances').add(data);
+        }
+        
+        loadMaintenances();
+        e.target.reset();
+    } finally {
+        btn.textContent = docId ? 'Atualizar' : 'Registrar';
+        btn.disabled = false;
+    }
+});
+
+// Carregar manutenções com botão de edição
+async function loadMaintenances() {
+    const query = await db.collection('maintenances')
+        .orderBy('startDate', 'desc')
         .limit(20)
-        .get()
-        .then((querySnapshot) => {
-            maintenanceList.innerHTML = '';
-            
-            if (querySnapshot.empty) {
-                maintenanceList.innerHTML = '<tr><td colspan="5" class="text-center">Nenhuma manutenção registrada.</td></tr>';
-                return;
-            }
-            
-            querySnapshot.forEach((doc) => {
-                const data = doc.data();
-                const startDate = data.startDate.toDate();
-                const endDate = data.endDate ? data.endDate.toDate() : null;
-                
-                let durationText = 'Em andamento';
-                if (data.duration) {
-                    const hours = Math.floor(data.duration / 60);
-                    const minutes = Math.floor(data.duration % 60);
-                    durationText = `${hours}h ${minutes}m`;
-                }
-                
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${data.neighborhood}</td>
-                    <td>${data.problemType}</td>
-                    <td>${formatDateTime(startDate)}</td>
-                    <td>${endDate ? formatDateTime(endDate) : '-'}</td>
-                    <td>${durationText}</td>
-                `;
-                maintenanceList.appendChild(row);
-            });
-        })
-        .catch((error) => {
-            console.error('Erro ao carregar manutenções:', error);
-            maintenanceList.innerHTML = '<tr><td colspan="5" class="text-center">Erro ao carregar manutenções.</td></tr>';
+        .get();
+
+    document.getElementById('maintenanceList').innerHTML = query.docs.map(doc => `
+        <tr>
+            <td>${doc.data().neighborhood}</td>
+            <td>${doc.data().problemType}</td>
+            <td>${doc.data().startDate.toDate().toLocaleString()}</td>
+            <td>${doc.data().endDate?.toDate().toLocaleString() || '-'}</td>
+            <td>${doc.data().duration ? `${Math.floor(doc.data().duration/60)}h ${doc.data().duration%60}m` : 'Em andamento'}</td>
+            <td><button class="btn btn-sm btn-outline-primary edit-btn" data-id="${doc.id}">Editar</button></td>
+        </tr>
+    `).join('');
+
+    // Configura eventos de edição
+    document.querySelectorAll('.edit-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const docId = btn.dataset.id;
+            // ... (preencher formulário com dados existentes)
         });
-}
-
-// Formata data e hora
-function formatDateTime(date) {
-    const options = {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    };
-    return date.toLocaleString('pt-BR', options);
-}
-
-// Carrega as manutenções quando a página é carregada
-if (document.getElementById('maintenanceList')) {
-    document.addEventListener('DOMContentLoaded', loadMaintenances);
+    });
 }
