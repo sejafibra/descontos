@@ -302,6 +302,50 @@
         // Variável para controle de problemas avulsos
         let issueCount = 0;
 
+        // Função para carregar bairros
+        function loadNeighborhoods(city) {
+            const neighborhoodSelect = document.getElementById('maintenanceNeighborhood');
+            neighborhoodSelect.innerHTML = '<option value="" disabled selected>Selecione um bairro</option>';
+            neighborhoodSelect.disabled = !city;
+            
+            if (city && CITIES_DATA[city]) {
+                CITIES_DATA[city].forEach(neighborhood => {
+                    neighborhoodSelect.add(new Option(neighborhood, neighborhood));
+                });
+                neighborhoodSelect.disabled = false;
+            }
+        }
+
+        // Função para configurar botão de edição
+        async function setupEditButton(btn) {
+            const snapshot = await db.ref('maintenances/' + btn.dataset.id).once('value');
+            const data = snapshot.val();
+
+            // Preenche a cidade e carrega os bairros
+            document.getElementById('maintenanceCity').value = data.city;
+            loadNeighborhoods(data.city);
+
+            // Aguarda os bairros estarem disponíveis
+            const checkInterval = setInterval(() => {
+                const neighborhoodSelect = document.getElementById('maintenanceNeighborhood');
+                if (neighborhoodSelect.options.length > 1) {
+                    clearInterval(checkInterval);
+                    neighborhoodSelect.value = data.neighborhood;
+                    
+                    // Preenche os demais campos
+                    document.getElementById('problemType').value = data.problemType;
+                    document.getElementById('responsible').value = data.responsible;
+                    document.getElementById('startDate').value = new Date(data.startDate).toISOString().slice(0,16);
+                    document.getElementById('endDate').value = data.endDate ? new Date(data.endDate).toISOString().slice(0,16) : '';
+                    document.maintenanceForm.docId.value = snapshot.key;
+                    document.querySelector('#maintenanceForm button[type="submit"]').textContent = 'Atualizar';
+                    
+                    // Navega para a aba de registro
+                    new bootstrap.Tab(document.querySelector('#register-tab')).show();
+                }
+            }, 100);
+        }
+
         // Verifica conexão com o Firebase
         function checkConnection() {
             const connectedRef = db.ref(".info/connected");
@@ -320,19 +364,8 @@
             checkConnection();
 
             // Configura seleção de cidades/bairros
-            const citySelect = document.getElementById('maintenanceCity');
-            const neighborhoodSelect = document.getElementById('maintenanceNeighborhood');
-            
-            citySelect.addEventListener('change', function() {
-                const selectedCity = this.value;
-                neighborhoodSelect.innerHTML = '<option value="" disabled selected>Selecione um bairro</option>';
-                neighborhoodSelect.disabled = !selectedCity;
-                
-                if (selectedCity && CITIES_DATA[selectedCity]) {
-                    CITIES_DATA[selectedCity].forEach(neighborhood => {
-                        neighborhoodSelect.add(new Option(neighborhood, neighborhood));
-                    });
-                }
+            document.getElementById('maintenanceCity').addEventListener('change', function() {
+                loadNeighborhoods(this.value);
             });
 
             // Define data/hora atual como padrão
@@ -465,31 +498,7 @@
 
                 // Configurar botões de edição
                 document.querySelectorAll('.edit-btn').forEach(btn => {
-                    btn.addEventListener('click', async () => {
-                        const snapshot = await db.ref('maintenances/' + btn.dataset.id).once('value');
-                        const data = snapshot.val();
-
-                        document.getElementById('maintenanceCity').value = data.city;
-                        
-                        // Dispara o evento change para carregar os bairros
-                        const event = new Event('change');
-                        document.getElementById('maintenanceCity').dispatchEvent(event);
-                        
-                        // Aguarda um momento para garantir que os bairros foram carregados
-                        setTimeout(() => {
-                            document.getElementById('maintenanceNeighborhood').value = data.neighborhood;
-                            document.getElementById('problemType').value = data.problemType;
-                            document.getElementById('responsible').value = data.responsible;
-                            document.getElementById('startDate').value = new Date(data.startDate).toISOString().slice(0,16);
-                            document.getElementById('endDate').value = data.endDate ? new Date(data.endDate).toISOString().slice(0,16) : '';
-                            document.maintenanceForm.docId.value = snapshot.key;
-                            document.querySelector('#maintenanceForm button[type="submit"]').textContent = 'Atualizar';
-                            
-                            // Navega para a aba de registro
-                            const tab = new bootstrap.Tab('#register-tab');
-                            tab.show();
-                        }, 100);
-                    });
+                    btn.addEventListener('click', () => setupEditButton(btn));
                 });
 
             } catch (error) {
