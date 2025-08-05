@@ -1,125 +1,109 @@
-// Configuração do Firebase
-const auth = firebase.auth();
-const db = firebase.firestore();
+// Configuração segura do Firebase
+if (typeof firebase === 'undefined') {
+    console.error('Firebase não foi carregado!');
+} else if (!firebase.apps.length) {
+    const firebaseConfig = {
+        apiKey: "AIzaSyC95aDwbm43uv7UPB7YDT5VjCe5USz2mZ8",
+        authDomain: "descontos-4ab4b.firebaseapp.com",
+        projectId: "descontos-4ab4b",
+        storageBucket: "descontos-4ab4b.appspot.com",
+        messagingSenderId: "907559767912",
+        appId: "1:907559767912:web:d9974a77e46a5ef08ed0dd"
+    };
+    firebase.initializeApp(firebaseConfig);
+}
 
-// Dados de cidades e bairros (nome da constante corrigido para tudo minúsculo)
-const cidades_e_bairros = {
+const db = firebase.firestore();
+const auth = firebase.auth();
+
+// Dados locais de cidades e bairros
+const CIDADES_E_BAIRROS = {
     "Caraguá": ["Centro", "Caputera", "Olaria", "Sumaré", "Massaguaçú"],
     "Ubatuba": ["Centro", "Perequê-Açú", "Itaguá", "Ipiranguinha"]
 };
 
-// Inicialização do formulário
-document.addEventListener('DOMContentLoaded', function() {
-    console.log("DOM carregado - Iniciando configuração...");
-    
-    try {
-        const citySelect = document.getElementById('city');
-        const neighborhoodSelect = document.getElementById('neighborhood');
+// Função principal
+const initializeMaintenanceForm = () => {
+    const citySelect = document.getElementById('city');
+    const neighborhoodSelect = document.getElementById('neighborhood');
+    const form = document.getElementById('maintenanceForm');
 
-        if (!citySelect || !neighborhoodSelect) {
-            throw new Error("Elementos do formulário não encontrados!");
+    if (!citySelect || !neighborhoodSelect || !form) {
+        console.error('Elementos do formulário não encontrados!');
+        return;
+    }
+
+    // Popular cidades
+    citySelect.innerHTML = '<option value="" selected disabled>Selecione uma cidade</option>';
+    Object.keys(CIDADES_E_BAIRROS).forEach(cidade => {
+        citySelect.add(new Option(cidade, cidade));
+    });
+
+    // Evento de mudança de cidade
+    citySelect.addEventListener('change', () => {
+        neighborhoodSelect.innerHTML = '<option value="" selected disabled>Selecione um bairro</option>';
+        neighborhoodSelect.disabled = !citySelect.value;
+
+        if (citySelect.value && CIDADES_E_BAIRROS[citySelect.value]) {
+            CIDADES_E_BAIRROS[citySelect.value].forEach(bairro => {
+                neighborhoodSelect.add(new Option(bairro, bairro));
+            });
         }
+    });
 
-        // Limpa e popula as cidades
-        citySelect.innerHTML = '';
-        let option = document.createElement('option');
-        option.value = '';
-        option.textContent = 'Selecione uma cidade';
-        citySelect.appendChild(option);
+    // Evento de submit do formulário
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const submitBtn = form.querySelector('button[type="submit"]');
+        
+        try {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Salvando...';
 
-        Object.keys(cidades_e_bairros).forEach(function(cidade) {
-            let option = document.createElement('option');
-            option.value = cidade;
-            option.textContent = cidade;
-            citySelect.appendChild(option);
-        });
+            const maintenanceData = {
+                city: citySelect.value,
+                neighborhood: neighborhoodSelect.value,
+                problemType: form.problemType.value,
+                responsible: form.responsible.value,
+                startDate: firebase.firestore.Timestamp.fromDate(new Date(form.startDate.value)),
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                createdBy: auth.currentUser.email,
+                status: form.endDate.value ? 'Concluído' : 'Pendente'
+            };
 
-        // Configura autocomplete de bairros
-        citySelect.addEventListener('change', function() {
-            console.log("Cidade alterada para:", this.value);
-            
-            neighborhoodSelect.innerHTML = '';
-            let defaultOption = document.createElement('option');
-            defaultOption.value = '';
-            defaultOption.textContent = 'Selecione um bairro';
-            neighborhoodSelect.appendChild(defaultOption);
-
-            if (this.value && cidades_e_bairros[this.value]) {
-                console.log("Carregando bairros para:", this.value);
-                neighborhoodSelect.disabled = false;
-                
-                cidades_e_bairros[this.value].forEach(function(bairro) {
-                    let option = document.createElement('option');
-                    option.value = bairro;
-                    option.textContent = bairro;
-                    neighborhoodSelect.appendChild(option);
-                });
-            } else {
-                console.log("Nenhuma cidade válida selecionada");
-                neighborhoodSelect.disabled = true;
+            if (form.endDate.value) {
+                maintenanceData.endDate = firebase.firestore.Timestamp.fromDate(new Date(form.endDate.value));
+                maintenanceData.duration = Math.round(
+                    (new Date(form.endDate.value) - new Date(form.startDate.value)) / (1000 * 60)
+                );
             }
-        });
 
-        // Carrega manutenções ao abrir a página
-        loadMaintenances();
-        
-    } catch (error) {
-        console.error("Erro na inicialização:", error);
-        alert("Erro ao carregar o formulário: " + error.message);
-    }
-});
+            if (form.docId.value) {
+                await db.collection('maintenances').doc(form.docId.value).update(maintenanceData);
+                alert('Manutenção atualizada com sucesso!');
+            } else {
+                await db.collection('maintenances').add(maintenanceData);
+                alert('Manutenção cadastrada com sucesso!');
+            }
 
-// Função para cadastrar/editar manutenções
-document.getElementById('maintenanceForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    const btn = this.querySelector('button[type="submit"]');
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Processando...';
+            form.reset();
+            form.docId.value = '';
+            submitBtn.textContent = 'Registrar';
+            await loadMaintenances();
 
-    try {
-        const docData = {
-            city: this.city.value,
-            neighborhood: this.neighborhood.value,
-            problemType: this.problemType.value,
-            responsible: this.responsible.value,
-            startDate: firebase.firestore.Timestamp.fromDate(new Date(this.startDate.value)),
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            createdBy: auth.currentUser.email,
-            status: 'Pendente'
-        };
-
-        if (this.endDate.value) {
-            docData.endDate = firebase.firestore.Timestamp.fromDate(new Date(this.endDate.value));
-            docData.duration = Math.round((new Date(this.endDate.value) - new Date(this.startDate.value)) / (1000 * 60));
-            docData.status = 'Concluído';
+        } catch (error) {
+            console.error('Erro ao salvar:', error);
+            alert(`Erro: ${error.message}`);
+        } finally {
+            submitBtn.disabled = false;
         }
+    });
+};
 
-        if (this.docId.value) {
-            await db.collection('maintenances').doc(this.docId.value).update(docData);
-            alert('Atualizado com sucesso!');
-        } else {
-            await db.collection('maintenances').add(docData);
-            alert('Cadastrado com sucesso!');
-        }
-
-        this.reset();
-        this.docId.value = '';
-        btn.textContent = 'Registrar';
-        loadMaintenances();
-        
-    } catch (error) {
-        console.error("Erro:", error);
-        alert('Erro: ' + error.message);
-    } finally {
-        btn.disabled = false;
-    }
-});
-
-// Carrega a lista de manutenções
-async function loadMaintenances() {
+// Carregar manutenções
+const loadMaintenances = async () => {
     try {
-        const querySnapshot = await db.collection('maintenances')
+        const snapshot = await db.collection('maintenances')
             .orderBy('startDate', 'desc')
             .limit(20)
             .get();
@@ -127,31 +111,28 @@ async function loadMaintenances() {
         const tbody = document.getElementById('maintenanceList');
         tbody.innerHTML = '';
 
-        querySnapshot.forEach(doc => {
+        snapshot.forEach(doc => {
             const data = doc.data();
-            const startDate = data.startDate.toDate();
-            const endDate = data.endDate?.toDate();
-
             tbody.innerHTML += `
                 <tr>
                     <td>${data.neighborhood}</td>
                     <td>${data.problemType}</td>
-                    <td>${startDate.toLocaleString('pt-BR')}</td>
-                    <td>${endDate ? endDate.toLocaleString('pt-BR') : '-'}</td>
+                    <td>${data.startDate.toDate().toLocaleString('pt-BR')}</td>
+                    <td>${data.endDate ? data.endDate.toDate().toLocaleString('pt-BR') : '-'}</td>
                     <td>${data.duration ? `${Math.floor(data.duration/60)}h ${data.duration%60}m` : 'Em andamento'}</td>
                     <td><button class="btn btn-sm btn-outline-primary edit-btn" data-id="${doc.id}">Editar</button></td>
                 </tr>
             `;
         });
 
-        // Configura botões de edição
+        // Configurar botões de edição
         document.querySelectorAll('.edit-btn').forEach(btn => {
             btn.addEventListener('click', async () => {
                 const doc = await db.collection('maintenances').doc(btn.dataset.id).get();
                 const data = doc.data();
 
                 document.getElementById('city').value = data.city;
-                document.getElementById('neighborhood').innerHTML = `<option value="${data.neighborhood}">${data.neighborhood}</option>`;
+                document.getElementById('neighborhood').innerHTML = `<option value="${data.neighborhood}" selected>${data.neighborhood}</option>`;
                 document.getElementById('problemType').value = data.problemType;
                 document.getElementById('responsible').value = data.responsible;
                 document.getElementById('startDate').value = data.startDate.toDate().toISOString().slice(0,16);
@@ -162,9 +143,15 @@ async function loadMaintenances() {
         });
 
     } catch (error) {
-        console.error("Erro ao carregar:", error);
+        console.error('Erro ao carregar:', error);
         document.getElementById('maintenanceList').innerHTML = `
-            <tr><td colspan="6" class="text-center text-danger">Erro ao carregar dados</td></tr>
+            <tr><td colspan="6" class="text-center text-danger">Erro ao carregar manutenções</td></tr>
         `;
     }
-}
+};
+
+// Inicialização quando o DOM estiver pronto
+document.addEventListener('DOMContentLoaded', () => {
+    initializeMaintenanceForm();
+    console.log('Sistema de manutenções inicializado');
+});
