@@ -1,7 +1,5 @@
-// Configuração segura do Firebase
-if (typeof firebase === 'undefined') {
-    console.error('Firebase não foi carregado!');
-} else if (!firebase.apps.length) {
+// Verificação segura para evitar duplicação
+if (typeof window.firebaseApp === 'undefined') {
     const firebaseConfig = {
         apiKey: "AIzaSyC95aDwbm43uv7UPB7YDT5VjCe5USz2mZ8",
         authDomain: "descontos-4ab4b.firebaseapp.com",
@@ -10,43 +8,51 @@ if (typeof firebase === 'undefined') {
         messagingSenderId: "907559767912",
         appId: "1:907559767912:web:d9974a77e46a5ef08ed0dd"
     };
+    
     firebase.initializeApp(firebaseConfig);
+    window.firebaseApp = true;
+    window.firebaseAuth = firebase.auth();
+    window.firebaseDb = firebase.firestore();
 }
 
-const db = firebase.firestore();
-const auth = firebase.auth();
-
 // Dados locais de cidades e bairros
-const CIDADES_E_BAIRROS = {
-    "Caraguá": ["Centro", "Caputera", "Olaria", "Sumaré", "Massaguaçú"],
-    "Ubatuba": ["Centro", "Perequê-Açú", "Itaguá", "Ipiranguinha"]
+const MAINTENANCE_DATA = {
+    cities: {
+        "Caraguá": ["Centro", "Caputera", "Olaria", "Sumaré", "Massaguaçú"],
+        "Ubatuba": ["Centro", "Perequê-Açú", "Itaguá", "Ipiranguinha"]
+    }
 };
 
 // Função principal
-const initializeMaintenanceForm = () => {
-    const citySelect = document.getElementById('city');
-    const neighborhoodSelect = document.getElementById('neighborhood');
-    const form = document.getElementById('maintenanceForm');
+function setupMaintenanceSystem() {
+    // Elementos do formulário
+    const elements = {
+        citySelect: document.getElementById('maintenanceCity'),
+        neighborhoodSelect: document.getElementById('maintenanceNeighborhood'),
+        form: document.getElementById('maintenanceForm'),
+        list: document.getElementById('maintenanceList')
+    };
 
-    if (!citySelect || !neighborhoodSelect || !form) {
-        console.error('Elementos do formulário não encontrados!');
+    // Validação dos elementos
+    if (!elements.citySelect || !elements.neighborhoodSelect || !elements.form || !elements.list) {
+        console.error('Elementos essenciais não encontrados!');
         return;
     }
 
-    // Popular cidades
-    citySelect.innerHTML = '<option value="" selected disabled>Selecione uma cidade</option>';
-    Object.keys(CIDADES_E_BAIRROS).forEach(cidade => {
-        citySelect.add(new Option(cidade, cidade));
+    // Popula cidades
+    elements.citySelect.innerHTML = '<option value="" disabled selected>Selecione uma cidade</option>';
+    Object.keys(MAINTENANCE_DATA.cities).forEach(city => {
+        elements.citySelect.add(new Option(city, city));
     });
 
     // Evento de mudança de cidade
-    citySelect.addEventListener('change', () => {
-        neighborhoodSelect.innerHTML = '<option value="" selected disabled>Selecione um bairro</option>';
-        neighborhoodSelect.disabled = !citySelect.value;
+    elements.citySelect.addEventListener('change', () => {
+        elements.neighborhoodSelect.innerHTML = '<option value="" disabled selected>Selecione um bairro</option>';
+        elements.neighborhoodSelect.disabled = !elements.citySelect.value;
 
-        if (citySelect.value && CIDADES_E_BAIRROS[citySelect.value]) {
-            CIDADES_E_BAIRROS[citySelect.value].forEach(bairro => {
-                neighborhoodSelect.add(new Option(bairro, bairro));
+        if (elements.citySelect.value && MAINTENANCE_DATA.cities[elements.citySelect.value]) {
+            MAINTENANCE_DATA.cities[elements.citySelect.value].forEach(neighborhood => {
+                elements.neighborhoodSelect.add(new Option(neighborhood, neighborhood));
             });
         }
     });
@@ -151,7 +157,5 @@ const loadMaintenances = async () => {
 };
 
 // Inicialização quando o DOM estiver pronto
-document.addEventListener('DOMContentLoaded', () => {
-    initializeMaintenanceForm();
-    console.log('Sistema de manutenções inicializado');
+document.addEventListener('DOMContentLoaded', setupMaintenanceSystem);
 });
