@@ -1,33 +1,36 @@
-// Configuração de cidades e bairros
+// Configuração do Firebase
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+// Dados de cidades e bairros
 const CIDADES_E_BAIRROS = {
     "Caraguá": ["Centro", "Caputera", "Olaria", "Sumaré", "Massaguaçú"],
     "Ubatuba": ["Centro", "Perequê-Açú", "Itaguá", "Ipiranguinha"],
     };
 
-// Ativa o autocomplete de bairros quando seleciona cidade
-document.getElementById('city').addEventListener('change', function() {
-    const bairroSelect = document.getElementById('neighborhood');
-    bairroSelect.innerHTML = '<option value="">Selecione um bairro</option>';
-    bairroSelect.disabled = !this.value;
-    
-    if (this.value && CIDADES_E_BAIRROS[this.value]) {
-        CIDADES_E_BAIRROS[this.value].forEach(bairro => {
-            const option = document.createElement('option');
-            option.value = bairro;
-            option.textContent = bairro;
-            bairroSelect.appendChild(option);
-        });
-    }
+// Inicialização do formulário
+document.addEventListener('DOMContentLoaded', () => {
+    // Configura autocomplete de bairros
+    document.getElementById('city').addEventListener('change', function() {
+        const bairroSelect = document.getElementById('neighborhood');
+        bairroSelect.innerHTML = '<option value="">Selecione um bairro</option>';
+        bairroSelect.disabled = !this.value;
+        
+        if (this.value && CIDADES_E_BAIRROS[this.value]) {
+            CIDADES_E_BAIRROS[this.value].forEach(bairro => {
+                const option = document.createElement('option');
+                option.value = bairro;
+                option.textContent = bairro;
+                bairroSelect.appendChild(option);
+            });
+        }
+    });
+
+    // Carrega manutenções ao abrir a página
+    loadMaintenances();
 });
 
-// Função para formatar data para o Firebase
-function formatFirebaseDate(dateString) {
-    if (!dateString) return null;
-    const date = new Date(dateString);
-    return firebase.firestore.Timestamp.fromDate(date);
-}
-
-// Submit do formulário corrigido
+// Função para cadastrar/editar manutenções
 document.getElementById('maintenanceForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     
@@ -46,123 +49,83 @@ document.getElementById('maintenanceForm').addEventListener('submit', async func
             createdBy: auth.currentUser.email,
             status: 'Pendente'
         };
-         // Adiciona dados opcionais se existirem
+
         if (this.endDate.value) {
             docData.endDate = firebase.firestore.Timestamp.fromDate(new Date(this.endDate.value));
             docData.duration = Math.round((new Date(this.endDate.value) - new Date(this.startDate.value)) / (1000 * 60));
             docData.status = 'Concluído';
         }
 
-        await db.collection('maintenances').add(docData);
-        
-        this.reset();
-        loadMaintenances();
-        alert('Cadastro realizado com sucesso!');
-    } catch (error) {
-        console.error("Erro no cadastro:", error);
-        alert('Erro ao cadastrar: ' + error.message);
-    } finally {
-        btn.disabled = false;
-        btn.textContent = this.docId.value ? 'Atualizar' : 'Registrar';
-    }
-});
-        // Coleta os dados do formulário
-        const formData = {
-            city: this.city.value,
-            neighborhood: this.neighborhood.value,
-            problemType: this.problemType.value,
-            responsible: this.responsible.value,
-            startDate: formatFirebaseDate(this.startDate.value),
-            endDate: formatFirebaseDate(this.endDate.value),
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            createdBy: auth.currentUser.email,
-            status: this.endDate.value ? 'Concluído' : 'Pendente'
-        };
-
-        // Calcula a duração se tiver data final
-        if (this.endDate.value) {
-            const start = new Date(this.startDate.value);
-            const end = new Date(this.endDate.value);
-            formData.duration = Math.round((end - start) / (1000 * 60)); // em minutos
-        }
-
-        // Verifica se é edição ou novo registro
         if (this.docId.value) {
-            await db.collection('maintenances').doc(this.docId.value).update(formData);
-            alert('Manutenção atualizada com sucesso!');
+            await db.collection('maintenances').doc(this.docId.value).update(docData);
+            alert('Atualizado com sucesso!');
         } else {
-            await db.collection('maintenances').add(formData);
-            alert('Manutenção registrada com sucesso!');
+            await db.collection('maintenances').add(docData);
+            alert('Cadastrado com sucesso!');
         }
 
-        // Limpa o formulário e recarrega a lista
         this.reset();
         this.docId.value = '';
+        btn.textContent = 'Registrar';
         loadMaintenances();
         
     } catch (error) {
-        console.error("Erro ao salvar manutenção:", error);
-        alert('Erro ao salvar: ' + error.message);
+        console.error("Erro:", error);
+        alert('Erro: ' + error.message);
     } finally {
-        btn.textContent = originalText;
         btn.disabled = false;
     }
 });
 
-// Carrega as manutenções com opção de edição
+// Carrega a lista de manutenções
 async function loadMaintenances() {
     try {
-        const snapshot = await db.collection('maintenances')
+        const querySnapshot = await db.collection('maintenances')
             .orderBy('startDate', 'desc')
             .limit(20)
             .get();
 
-        const maintenanceList = document.getElementById('maintenanceList');
-        maintenanceList.innerHTML = '';
+        const tbody = document.getElementById('maintenanceList');
+        tbody.innerHTML = '';
 
-        snapshot.forEach(doc => {
+        querySnapshot.forEach(doc => {
             const data = doc.data();
-            const row = document.createElement('tr');
-            
-            row.innerHTML = `
-                <td>${data.neighborhood}</td>
-                <td>${data.problemType}</td>
-                <td>${data.startDate.toDate().toLocaleString('pt-BR')}</td>
-                <td>${data.endDate ? data.endDate.toDate().toLocaleString('pt-BR') : '-'}</td>
-                <td>${data.duration ? `${Math.floor(data.duration/60)}h ${data.duration%60}m` : 'Em andamento'}</td>
-                <td><button class="btn btn-sm btn-outline-primary edit-btn" data-id="${doc.id}">Editar</button></td>
+            const startDate = data.startDate.toDate();
+            const endDate = data.endDate?.toDate();
+
+            tbody.innerHTML += `
+                <tr>
+                    <td>${data.neighborhood}</td>
+                    <td>${data.problemType}</td>
+                    <td>${startDate.toLocaleString('pt-BR')}</td>
+                    <td>${endDate ? endDate.toLocaleString('pt-BR') : '-'}</td>
+                    <td>${data.duration ? `${Math.floor(data.duration/60)}h ${data.duration%60}m` : 'Em andamento'}</td>
+                    <td><button class="btn btn-sm btn-outline-primary edit-btn" data-id="${doc.id}">Editar</button></td>
+                </tr>
             `;
-            
-            maintenanceList.appendChild(row);
         });
 
-        // Configura os botões de edição
+        // Configura botões de edição
         document.querySelectorAll('.edit-btn').forEach(btn => {
-            btn.addEventListener('click', async function() {
-                const docId = this.dataset.id;
-                const doc = await db.collection('maintenances').doc(docId).get();
+            btn.addEventListener('click', async () => {
+                const doc = await db.collection('maintenances').doc(btn.dataset.id).get();
                 const data = doc.data();
 
-                // Preenche o formulário
                 document.getElementById('city').value = data.city;
                 document.getElementById('neighborhood').innerHTML = `<option value="${data.neighborhood}">${data.neighborhood}</option>`;
                 document.getElementById('problemType').value = data.problemType;
                 document.getElementById('responsible').value = data.responsible;
-                document.getElementById('startDate').value = data.startDate.toDate().toISOString().slice(0, 16);
-                document.getElementById('endDate').value = data.endDate ? data.endDate.toDate().toISOString().slice(0, 16) : '';
-                document.maintenanceForm.docId.value = docId;
+                document.getElementById('startDate').value = data.startDate.toDate().toISOString().slice(0,16);
+                document.getElementById('endDate').value = data.endDate?.toDate().toISOString().slice(0,16) || '';
+                document.maintenanceForm.docId.value = doc.id;
                 document.querySelector('#maintenanceForm button[type="submit"]').textContent = 'Atualizar';
             });
         });
 
     } catch (error) {
-        console.error("Erro ao carregar manutenções:", error);
-        document.getElementById('maintenanceList').innerHTML = 
-            '<tr><td colspan="6" class="text-center text-danger">Erro ao carregar dados</td></tr>';
+        console.error("Erro ao carregar:", error);
+        document.getElementById('maintenanceList').innerHTML = `
+            <tr><td colspan="6" class="text-center text-danger">Erro ao carregar dados</td></tr>
+        `;
     }
-}
-
-// Carrega as manutenções quando a página é aberta
-if (document.getElementById('maintenanceList')) {
-    document.addEventListener('DOMContentLoaded', loadMaintenances);
 }
