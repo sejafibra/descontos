@@ -32,11 +32,40 @@ document.getElementById('maintenanceForm').addEventListener('submit', async func
     e.preventDefault();
     
     const btn = this.querySelector('button[type="submit"]');
-    const originalText = btn.textContent;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Processando...';
     btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Processando...';
 
     try {
+        const docData = {
+            city: this.city.value,
+            neighborhood: this.neighborhood.value,
+            problemType: this.problemType.value,
+            responsible: this.responsible.value,
+            startDate: firebase.firestore.Timestamp.fromDate(new Date(this.startDate.value)),
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            createdBy: auth.currentUser.email,
+            status: 'Pendente'
+        };
+         // Adiciona dados opcionais se existirem
+        if (this.endDate.value) {
+            docData.endDate = firebase.firestore.Timestamp.fromDate(new Date(this.endDate.value));
+            docData.duration = Math.round((new Date(this.endDate.value) - new Date(this.startDate.value)) / (1000 * 60));
+            docData.status = 'Concluído';
+        }
+
+        await db.collection('maintenances').add(docData);
+        
+        this.reset();
+        loadMaintenances();
+        alert('Cadastro realizado com sucesso!');
+    } catch (error) {
+        console.error("Erro no cadastro:", error);
+        alert('Erro ao cadastrar: ' + error.message);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = this.docId.value ? 'Atualizar' : 'Registrar';
+    }
+});
         // Coleta os dados do formulário
         const formData = {
             city: this.city.value,
