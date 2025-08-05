@@ -9,6 +9,7 @@
     <style>
         body {
             background-color: #f8f9fa;
+            padding-top: 20px;
         }
         .additional-issue {
             background-color: #f8f9fa;
@@ -57,6 +58,13 @@
         #userEmail {
             align-self: center;
         }
+        .offline-alert {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            max-width: 300px;
+        }
         @media (max-width: 768px) {
             .tab-content {
                 padding: 10px !important;
@@ -87,6 +95,11 @@
 </head>
 <body>
     <div class="container-fluid">
+        <div id="offlineAlert" class="alert alert-warning alert-dismissible fade show offline-alert d-none">
+            <strong>Aviso:</strong> Você está no modo offline. As alterações serão sincronizadas quando a conexão voltar.
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
         <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
             <div class="container-fluid">
                 <a class="navbar-brand" href="#">Sistema de Manutenções</a>
@@ -259,26 +272,27 @@
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <script>
         // Configuração do Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyC95aDwbm43uv7UPB7YDT5VjCe5USz2mZ8",
             authDomain: "descontos-4ab4b.firebaseapp.com",
+            databaseURL: "https://descontos-4ab4b-default-rtdb.firebaseio.com",
             projectId: "descontos-4ab4b",
             storageBucket: "descontos-4ab4b.appspot.com",
             messagingSenderId: "907559767912",
             appId: "1:907559767912:web:d9974a77e46a5ef08ed0dd"
         };
 
-        // Inicializa o Firebase
-        firebase.initializeApp(firebaseConfig);
+        // Inicialização do Firebase
+        const app = firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
-        const db = firebase.firestore();
+        const db = firebase.database();
 
-        // Dados de cidades e bairros (pode ser migrado para o Firestore depois)
+        // Dados de cidades e bairros
         const MAINTENANCE_DATA = {
             cities: {
                 "Caraguá": ["Centro", "Caputera", "Olaria", "Sumaré", "Massaguaçú"],
@@ -289,8 +303,23 @@
         // Variável para controle de problemas avulsos
         let issueCount = 0;
 
+        // Verifica conexão com o Firebase
+        function checkConnection() {
+            const connectedRef = db.ref(".info/connected");
+            connectedRef.on("value", (snap) => {
+                if (snap.val() === true) {
+                    document.getElementById('offlineAlert').classList.add('d-none');
+                } else {
+                    document.getElementById('offlineAlert').classList.remove('d-none');
+                }
+            });
+        }
+
         // Inicialização quando o DOM estiver pronto
         document.addEventListener('DOMContentLoaded', () => {
+            // Verifica conexão
+            checkConnection();
+
             // Verifica autenticação
             auth.onAuthStateChanged((user) => {
                 if (!user || !['atendente@sejafibra.net', 'supervisor@sejafibra.net', 'bioranss@gmail.com'].includes(user.email)) {
@@ -310,11 +339,13 @@
                 });
             });
 
-            // Inicializa tooltips
-            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-            tooltipTriggerList.map(function (tooltipTriggerEl) {
-                return new bootstrap.Tooltip(tooltipTriggerEl);
-            });
+            // Inicializa datas padrão
+            const now = new Date();
+            document.getElementById('startDate').value = now.toISOString().slice(0, 16);
+            
+            const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+            document.getElementById('startDateFilter').valueAsDate = firstDay;
+            document.getElementById('endDateFilter').valueAsDate = now;
         });
 
         // Configuração do sistema de manutenções
@@ -355,25 +386,24 @@
                         neighborhood: neighborhoodSelect.value,
                         problemType: form.problemType.value,
                         responsible: form.responsible.value,
-                        startDate: firebase.firestore.Timestamp.fromDate(new Date(form.startDate.value)),
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        startDate: new Date(form.startDate.value).getTime(),
+                        createdAt: Date.now(),
                         createdBy: auth.currentUser.email,
                         status: form.endDate.value ? 'Concluído' : 'Pendente'
                     };
 
                     if (form.endDate.value) {
-                        maintenanceData.endDate = firebase.firestore.Timestamp.fromDate(new Date(form.endDate.value));
+                        maintenanceData.endDate = new Date(form.endDate.value).getTime();
                         maintenanceData.duration = Math.round(
-                            (new Date(form.endDate.value) - new Date(form.startDate.value)) / (1000 * 60)
-                        );
+                            (new Date(form.endDate.value) - new Date(form.startDate.value)) / (1000 * 60);
                     }
 
                     if (form.docId.value) {
-                        await db.collection('maintenances').doc(form.docId.value).update(maintenanceData);
+                        await db.ref('maintenances/' + form.docId.value).update(maintenanceData);
                         alert('Manutenção atualizada com sucesso!');
                     } else {
-                        await db.collection('maintenances').add(maintenanceData);
-                        alert('Manutenção cadastrada com sucesso!');
+                        const newRef = await db.ref('maintenances').push(maintenanceData);
+                        alert('Manutenção cadastrada com sucesso! ID: ' + newRef.key);
                     }
 
                     form.reset();
@@ -388,34 +418,41 @@
                     submitBtn.disabled = false;
                 }
             });
-
-            // Define data/hora atual como padrão
-            const now = new Date();
-            const nowStr = now.toISOString().slice(0, 16);
-            document.getElementById('startDate').value = nowStr;
         }
 
         // Carregar manutenções
         const loadMaintenances = async () => {
             try {
-                const snapshot = await db.collection('maintenances')
-                    .orderBy('startDate', 'desc')
-                    .limit(20)
-                    .get();
+                const snapshot = await db.ref('maintenances')
+                    .orderByChild('startDate')
+                    .limitToLast(20)
+                    .once('value');
 
                 const tbody = document.getElementById('maintenanceList');
                 tbody.innerHTML = '';
 
-                snapshot.forEach(doc => {
-                    const data = doc.data();
+                const maintenances = [];
+                snapshot.forEach(childSnapshot => {
+                    const data = childSnapshot.val();
+                    data.id = childSnapshot.key;
+                    maintenances.push(data);
+                });
+
+                // Ordena por data decrescente
+                maintenances.sort((a, b) => b.startDate - a.startDate);
+
+                maintenances.forEach(data => {
+                    const startDate = new Date(data.startDate);
+                    const endDate = data.endDate ? new Date(data.endDate) : null;
+                    
                     tbody.innerHTML += `
                         <tr>
                             <td>${data.neighborhood}</td>
                             <td>${data.problemType}</td>
-                            <td>${data.startDate.toDate().toLocaleString('pt-BR')}</td>
-                            <td>${data.endDate ? data.endDate.toDate().toLocaleString('pt-BR') : '-'}</td>
+                            <td>${startDate.toLocaleString('pt-BR')}</td>
+                            <td>${endDate ? endDate.toLocaleString('pt-BR') : '-'}</td>
                             <td>${data.duration ? `${Math.floor(data.duration/60)}h ${data.duration%60}m` : 'Em andamento'}</td>
-                            <td><button class="btn btn-sm btn-outline-primary edit-btn" data-id="${doc.id}">Editar</button></td>
+                            <td><button class="btn btn-sm btn-outline-primary edit-btn" data-id="${data.id}">Editar</button></td>
                         </tr>
                     `;
                 });
@@ -423,25 +460,20 @@
                 // Configurar botões de edição
                 document.querySelectorAll('.edit-btn').forEach(btn => {
                     btn.addEventListener('click', async () => {
-                        const doc = await db.collection('maintenances').doc(btn.dataset.id).get();
-                        const data = doc.data();
+                        const snapshot = await db.ref('maintenances/' + btn.dataset.id).once('value');
+                        const data = snapshot.val();
 
                         document.getElementById('maintenanceCity').value = data.city;
-                        
-                        // Dispara o evento change para carregar os bairros
                         document.getElementById('maintenanceCity').dispatchEvent(new Event('change'));
                         
-                        // Aguarda um momento para garantir que os bairros foram carregados
                         setTimeout(() => {
                             document.getElementById('maintenanceNeighborhood').value = data.neighborhood;
                             document.getElementById('problemType').value = data.problemType;
                             document.getElementById('responsible').value = data.responsible;
-                            document.getElementById('startDate').value = data.startDate.toDate().toISOString().slice(0,16);
-                            document.getElementById('endDate').value = data.endDate?.toDate().toISOString().slice(0,16) || '';
-                            document.maintenanceForm.docId.value = doc.id;
+                            document.getElementById('startDate').value = new Date(data.startDate).toISOString().slice(0,16);
+                            document.getElementById('endDate').value = data.endDate ? new Date(data.endDate).toISOString().slice(0,16) : '';
+                            document.maintenanceForm.docId.value = snapshot.key;
                             document.querySelector('#maintenanceForm button[type="submit"]').textContent = 'Atualizar';
-                            
-                            // Navega para a aba de registro
                             new bootstrap.Tab(document.querySelector('#register-tab')).show();
                         }, 100);
                     });
@@ -457,13 +489,6 @@
 
         // Configuração do sistema de estatísticas
         function setupStatistics() {
-            // Inicializa datas padrão
-            const today = new Date();
-            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-            
-            document.getElementById('startDateFilter').valueAsDate = firstDay;
-            document.getElementById('endDateFilter').valueAsDate = today;
-
             // Configura botão para adicionar problemas avulsos
             document.getElementById('addIssueBtn').addEventListener('click', addAdditionalIssue);
 
@@ -475,9 +500,8 @@
 
                 try {
                     // Processa filtros
-                    const startDate = new Date(document.getElementById('startDateFilter').value);
-                    const endDate = new Date(document.getElementById('endDateFilter').value);
-                    endDate.setHours(23, 59, 59, 999);
+                    const startDate = new Date(document.getElementById('startDateFilter').value).getTime();
+                    const endDate = new Date(document.getElementById('endDateFilter').value).getTime() + 86400000; // +1 dia
 
                     // Coleta problemas avulsos
                     const additionalIssues = Array.from(document.querySelectorAll('.additional-issue')).map(issue => {
@@ -489,23 +513,17 @@
                     });
 
                     // Consulta manutenções no Firebase
-                    let query = db.collection('maintenances')
-                        .where('startDate', '>=', firebase.firestore.Timestamp.fromDate(startDate))
-                        .where('startDate', '<=', firebase.firestore.Timestamp.fromDate(endDate));
-
-                    const neighborhood = document.getElementById('filterNeighborhood').value.trim();
-                    if (neighborhood) query = query.where('neighborhood', '==', neighborhood);
-
-                    const problemType = document.getElementById('filterProblemType').value;
-                    if (problemType !== 'Todos') query = query.where('problemType', '==', problemType);
-
-                    const snapshot = await query.get();
+                    const snapshot = await db.ref('maintenances')
+                        .orderByChild('startDate')
+                        .startAt(startDate)
+                        .endAt(endDate)
+                        .once('value');
 
                     // Processa resultados
                     const results = { tv: 0, internet: 0, geral: 0 }; // em minutos
 
-                    snapshot.forEach(doc => {
-                        const data = doc.data();
+                    snapshot.forEach(childSnapshot => {
+                        const data = childSnapshot.val();
                         const duration = data.duration || 0;
                         results[data.problemType.toLowerCase()] += duration;
                     });
@@ -577,6 +595,12 @@
                     </div>
                 </div>
             `;
+
+            // Define data/hora atual como padrão
+            const now = new Date();
+            const nowStr = now.toISOString().slice(0, 16);
+            issueDiv.querySelector('.issue-start').value = nowStr;
+            issueDiv.querySelector('.issue-end').value = nowStr;
 
             issueDiv.querySelector('.remove-issue').addEventListener('click', () => {
                 issueDiv.remove();
