@@ -5,22 +5,28 @@ document.getElementById('addIssueBtn').addEventListener('click', () => {
     issueDiv.innerHTML = `
         <div class="row g-2">
             <div class="col-md-3">
-                <label class="form-label">Tipo</label>
-                <select class="form-select issue-type">...</select>
+                <select class="form-select issue-type">
+                    <option value="TV">TV</option>
+                    <option value="Internet">Internet</option>
+                    <option value="Geral">Geral</option>
+                </select>
             </div>
             <div class="col-md-4">
-                <label class="form-label">Data/Hora Abertura</label>
-                <input type="datetime-local" class="form-control issue-start">
+                <input type="datetime-local" class="form-control issue-start" required>
             </div>
             <div class="col-md-4">
-                <label class="form-label">Data/Hora Execução</label>
-                <input type="datetime-local" class="form-control issue-end">
+                <input type="datetime-local" class="form-control issue-end" required>
             </div>
             <div class="col-md-1">
-                <button class="btn btn-danger btn-sm remove-issue">X</button>
+                <button type="button" class="btn btn-danger btn-sm remove-issue">X</button>
             </div>
         </div>
     `;
+    
+    issueDiv.querySelector('.remove-issue').addEventListener('click', () => {
+        issueDiv.remove();
+    });
+    
     document.getElementById('additionalIssues').appendChild(issueDiv);
 });
 
