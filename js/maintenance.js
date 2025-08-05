@@ -2,54 +2,71 @@
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-// Dados atualizados de cidades e bairros (CORRIGIDO O NOME DA CONSTANTE)
-const CIDADES_E_BAIRROS = {
+// Dados de cidades e bairros (nome da constante corrigido para tudo minúsculo)
+const cidades_e_bairros = {
     "Caraguá": ["Centro", "Caputera", "Olaria", "Sumaré", "Massaguaçú"],
     "Ubatuba": ["Centro", "Perequê-Açú", "Itaguá", "Ipiranguinha"]
 };
 
 // Inicialização do formulário
-document.addEventListener('DOMContentLoaded', () => {
-    const citySelect = document.getElementById('city');
-    const neighborhoodSelect = document.getElementById('neighborhood');
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("DOM carregado - Iniciando configuração...");
+    
+    try {
+        const citySelect = document.getElementById('city');
+        const neighborhoodSelect = document.getElementById('neighborhood');
 
-    // Limpa e popula as cidades (MELHORADO)
-    citySelect.innerHTML = '';
-    const defaultOption = document.createElement('option');
-    defaultOption.value = '';
-    defaultOption.textContent = 'Selecione uma cidade';
-    citySelect.appendChild(defaultOption);
-
-    Object.keys(CIDADES_E_BAIRROS).forEach(cidade => {
-        const option = document.createElement('option');
-        option.value = cidade;
-        option.textContent = cidade;
-        citySelect.appendChild(option);
-    });
-
-    // Configura autocomplete de bairros (CÓDIGO REVISADO)
-    citySelect.addEventListener('change', function() {
-        neighborhoodSelect.innerHTML = '';
-        const defaultNeighborhoodOption = document.createElement('option');
-        defaultNeighborhoodOption.value = '';
-        defaultNeighborhoodOption.textContent = 'Selecione um bairro';
-        neighborhoodSelect.appendChild(defaultNeighborhoodOption);
-
-        if (this.value && CIDADES_E_BAIRROS[this.value]) {
-            neighborhoodSelect.disabled = false;
-            CIDADES_E_BAIRROS[this.value].forEach(bairro => {
-                const option = document.createElement('option');
-                option.value = bairro;
-                option.textContent = bairro;
-                neighborhoodSelect.appendChild(option);
-            });
-        } else {
-            neighborhoodSelect.disabled = true;
+        if (!citySelect || !neighborhoodSelect) {
+            throw new Error("Elementos do formulário não encontrados!");
         }
-    });
 
-    // Carrega manutenções ao abrir a página
-    loadMaintenances();
+        // Limpa e popula as cidades
+        citySelect.innerHTML = '';
+        let option = document.createElement('option');
+        option.value = '';
+        option.textContent = 'Selecione uma cidade';
+        citySelect.appendChild(option);
+
+        Object.keys(cidades_e_bairros).forEach(function(cidade) {
+            let option = document.createElement('option');
+            option.value = cidade;
+            option.textContent = cidade;
+            citySelect.appendChild(option);
+        });
+
+        // Configura autocomplete de bairros
+        citySelect.addEventListener('change', function() {
+            console.log("Cidade alterada para:", this.value);
+            
+            neighborhoodSelect.innerHTML = '';
+            let defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = 'Selecione um bairro';
+            neighborhoodSelect.appendChild(defaultOption);
+
+            if (this.value && cidades_e_bairros[this.value]) {
+                console.log("Carregando bairros para:", this.value);
+                neighborhoodSelect.disabled = false;
+                
+                cidades_e_bairros[this.value].forEach(function(bairro) {
+                    let option = document.createElement('option');
+                    option.value = bairro;
+                    option.textContent = bairro;
+                    neighborhoodSelect.appendChild(option);
+                });
+            } else {
+                console.log("Nenhuma cidade válida selecionada");
+                neighborhoodSelect.disabled = true;
+            }
+        });
+
+        // Carrega manutenções ao abrir a página
+        loadMaintenances();
+        
+    } catch (error) {
+        console.error("Erro na inicialização:", error);
+        alert("Erro ao carregar o formulário: " + error.message);
+    }
 });
 
 // Função para cadastrar/editar manutenções
