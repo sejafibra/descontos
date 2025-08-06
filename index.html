@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Controle de Manutenções - Seja Fibra</title>
+    <title>Cálculo de Descontos - Seja Fibra</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
@@ -18,113 +18,65 @@
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
         .card-header {
-            background-color: #0d6efd;
+            background-color: #28a745;
             color: white;
             font-weight: bold;
-        }
-        .table-responsive {
-            margin-top: 20px;
-        }
-        .btn-action {
-            margin: 0 5px;
-        }
-        .form-section {
-            margin-bottom: 30px;
-        }
-        .status-badge {
-            padding: 5px 10px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: bold;
-        }
-        .status-active {
-            background-color: #ffc107;
-            color: #000;
-        }
-        .status-completed {
-            background-color: #198754;
-            color: #fff;
-        }
-        #appContent {
-            display: none;
-        }
-        #loginForm {
-            max-width: 400px;
-            margin: 50px auto;
         }
         .logo {
             max-height: 60px;
             margin-bottom: 20px;
         }
-        .user-info {
-            margin-left: 15px;
+        .result-card {
+            background-color: #f1f8ff;
+            border-left: 4px solid #007bff;
+        }
+        .os-item {
+            border-bottom: 1px solid #dee2e6;
+            padding: 10px 0;
+        }
+        .os-item:last-child {
+            border-bottom: none;
+        }
+        .add-os-btn {
+            margin-top: 10px;
+        }
+        .total-discount {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #dc3545;
+        }
+        .time-diff {
             font-size: 0.9rem;
             color: #6c757d;
         }
     </style>
 </head>
 <body>
-    <!-- Tela de Login (visível inicialmente) -->
-    <div id="loginSection" class="text-center">
-        <div class="card">
-            <div class="card-header">
-                <i class="fas fa-lock"></i> Acesso Restrito - Seja Fibra
-            </div>
-            <div class="card-body">
-                <img src="https://sejafibra.net/wp-content/uploads/2022/08/logo-sejafibra.png" alt="Seja Fibra" class="logo">
-                <form id="loginForm">
-                    <div class="mb-3">
-                        <label for="loginEmail" class="form-label">E-mail</label>
-                        <input type="email" class="form-control" id="loginEmail" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="loginPassword" class="form-label">Senha</label>
-                        <input type="password" class="form-control" id="loginPassword" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary w-100">
-                        <i class="fas fa-sign-in-alt"></i> Entrar
-                    </button>
-                </form>
-                <div id="loginError" class="alert alert-danger mt-3" style="display: none;"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Conteúdo do App (oculto inicialmente) -->
-    <div id="appContent" class="container">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <div>
-                <h1 class="d-inline-block">Controle de Manutenções</h1>
-                <span class="user-info">
-                    <i class="fas fa-user"></i> <span id="currentUserEmail"></span>
-                </span>
-            </div>
-            <button id="logoutBtn" class="btn btn-outline-danger">
-                <i class="fas fa-sign-out-alt"></i> Sair
-            </button>
+    <div class="container">
+        <div class="text-center mb-4">
+            <img src="https://sejafibra.net/wp-content/uploads/2022/08/logo-sejafibra.png" alt="Seja Fibra" class="logo">
+            <h1>Cálculo de Descontos</h1>
         </div>
         
-        <!-- Formulário de Cadastro -->
-        <div class="card form-section">
+        <!-- Formulário de Pesquisa -->
+        <div class="card">
             <div class="card-header">
-                <i class="fas fa-plus-circle"></i> Cadastrar Nova Manutenção
+                <i class="fas fa-search"></i> Pesquisar Manutenções
             </div>
             <div class="card-body">
-                <form id="maintenanceForm">
-                    <input type="hidden" id="maintenanceId">
-                    
+                <form id="searchForm">
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <label for="city" class="form-label">Cidade</label>
-                            <select class="form-select" id="city" required>
+                            <label for="searchCity" class="form-label">Cidade</label>
+                            <select class="form-select" id="searchCity" required>
                                 <option value="">Selecione uma cidade</option>
                                 <option value="Ubatuba">Ubatuba</option>
                                 <option value="Caraguatatuba">Caraguatatuba</option>
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label for="neighborhood" class="form-label">Bairro</label>
-                            <select class="form-select" id="neighborhood" required disabled>
+                            <label for="searchNeighborhood" class="form-label">Bairro</label>
+                            <select class="form-select" id="searchNeighborhood" required disabled>
                                 <option value="">Selecione primeiro a cidade</option>
                             </select>
                         </div>
@@ -132,84 +84,110 @@
                     
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <label for="problemType" class="form-label">Tipo de Problema</label>
-                            <select class="form-select" id="problemType" required>
-                                <option value="">Selecione o tipo</option>
-                                <option value="TV">TV</option>
-                                <option value="Internet">Internet</option>
-                                <option value="Geral">Geral</option>
-                            </select>
+                            <label for="startPeriod" class="form-label">Período Inicial</label>
+                            <input type="datetime-local" class="form-control" id="startPeriod" required>
                         </div>
                         <div class="col-md-6">
-                            <label for="responsible" class="form-label">Responsável</label>
-                            <input type="text" class="form-control" id="responsible" required>
+                            <label for="endPeriod" class="form-label">Período Final</label>
+                            <input type="datetime-local" class="form-control" id="endPeriod" required>
                         </div>
                     </div>
                     
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <label for="startDate" class="form-label">Data e Hora de Início</label>
-                            <input type="datetime-local" class="form-control" id="startDate" required>
+                            <label for="tvPlanValue" class="form-label">Valor do Plano TV (R$)</label>
+                            <input type="number" step="0.01" class="form-control" id="tvPlanValue" required>
                         </div>
                         <div class="col-md-6">
-                            <label for="endDate" class="form-label">Data e Hora de Término (opcional)</label>
-                            <input type="datetime-local" class="form-control" id="endDate">
+                            <label for="internetPlanValue" class="form-label">Valor do Plano Internet (R$)</label>
+                            <input type="number" step="0.01" class="form-control" id="internetPlanValue" required>
                         </div>
                     </div>
                     
-                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                        <button type="button" class="btn btn-secondary me-md-2" id="cancelBtn" style="display: none;">
-                            <i class="fas fa-times"></i> Cancelar
-                        </button>
-                        <button type="submit" class="btn btn-primary" id="saveBtn">
-                            <i class="fas fa-save"></i> Salvar
-                        </button>
-                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-calculator"></i> Calcular Descontos
+                    </button>
                 </form>
             </div>
         </div>
         
-        <!-- Listagem de Manutenções -->
+        <!-- Problemas Avulsos -->
         <div class="card">
             <div class="card-header">
-                <i class="fas fa-list"></i> Últimas Manutenções Cadastradas
+                <i class="fas fa-tools"></i> Problemas Avulsos do Cliente
             </div>
             <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-striped table-hover">
-                        <thead>
-                            <tr>
-                                <th>Cidade</th>
-                                <th>Bairro</th>
-                                <th>Tipo</th>
-                                <th>Responsável</th>
-                                <th>Início</th>
-                                <th>Término</th>
-                                <th>Status</th>
-                                <th>Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="maintenanceTable">
-                            <tr>
-                                <td colspan="8" class="text-center">Carregando dados...</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <div id="osContainer">
+                    <!-- Itens de OS serão adicionados aqui -->
+                </div>
+                <button type="button" class="btn btn-secondary add-os-btn" id="addOsBtn">
+                    <i class="fas fa-plus"></i> Adicionar OS
+                </button>
+            </div>
+        </div>
+        
+        <!-- Resultados -->
+        <div class="card result-card" id="resultsCard" style="display: none;">
+            <div class="card-header">
+                <i class="fas fa-file-invoice-dollar"></i> Resultado do Cálculo
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>Desconto por Manutenções</h5>
+                        <div id="maintenanceResults"></div>
+                    </div>
+                    <div class="col-md-6">
+                        <h5>Desconto por Problemas Avulsos</h5>
+                        <div id="osResults"></div>
+                    </div>
+                </div>
+                <hr>
+                <div class="text-end">
+                    <h4>Total de Descontos: <span id="totalDiscount" class="total-discount">R$ 0,00</span></h4>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Template para OS Avulsa (hidden) -->
+    <template id="osTemplate">
+        <div class="os-item">
+            <div class="row">
+                <div class="col-md-3">
+                    <label class="form-label">Tipo de OS</label>
+                    <select class="form-select os-type" required>
+                        <option value="TV">TV</option>
+                        <option value="Internet">Internet</option>
+                        <option value="Geral">Geral</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Abertura</label>
+                    <input type="datetime-local" class="form-control os-start" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Execução</label>
+                    <input type="datetime-local" class="form-control os-end" required>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="button" class="btn btn-danger btn-sm remove-os-btn">
+                        <i class="fas fa-trash"></i> Remover
+                    </button>
+                </div>
+            </div>
+        </div>
+    </template>
+
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
     
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
     <script>
-        // Configuração do Firebase
+        // Configuração do Firebase (mesmo do projeto anterior)
         const firebaseConfig = {
             apiKey: "AIzaSyC95aDwbm43uv7UPB7YDT5VjCe5USz2mZ8",
             authDomain: "descontos-4ab4b.firebaseapp.com",
@@ -220,10 +198,9 @@
             appId: "1:907559767912:web:d9974a77e46a5ef08ed0dd"
         };
 
-        // Inicializa o Firebase
+        // Inicializa o Firebase (apenas Database)
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
-        const auth = firebase.auth();
 
         // Mapeamento de bairros por cidade
         const neighborhoods = {
@@ -232,308 +209,335 @@
         };
 
         // Referências do DOM
-        const loginSection = document.getElementById('loginSection');
-        const appContent = document.getElementById('appContent');
-        const loginForm = document.getElementById('loginForm');
-        const loginEmail = document.getElementById('loginEmail');
-        const loginPassword = document.getElementById('loginPassword');
-        const loginError = document.getElementById('loginError');
-        const logoutBtn = document.getElementById('logoutBtn');
-        const currentUserEmail = document.getElementById('currentUserEmail');
-        
-        const citySelect = document.getElementById('city');
-        const neighborhoodSelect = document.getElementById('neighborhood');
-        const problemTypeSelect = document.getElementById('problemType');
-        const responsibleInput = document.getElementById('responsible');
-        const startDateInput = document.getElementById('startDate');
-        const endDateInput = document.getElementById('endDate');
-        const maintenanceForm = document.getElementById('maintenanceForm');
-        const maintenanceTable = document.getElementById('maintenanceTable');
-        const saveBtn = document.getElementById('saveBtn');
-        const cancelBtn = document.getElementById('cancelBtn');
-        const maintenanceIdInput = document.getElementById('maintenanceId');
+        const searchCity = document.getElementById('searchCity');
+        const searchNeighborhood = document.getElementById('searchNeighborhood');
+        const startPeriod = document.getElementById('startPeriod');
+        const endPeriod = document.getElementById('endPeriod');
+        const tvPlanValue = document.getElementById('tvPlanValue');
+        const internetPlanValue = document.getElementById('internetPlanValue');
+        const searchForm = document.getElementById('searchForm');
+        const osContainer = document.getElementById('osContainer');
+        const addOsBtn = document.getElementById('addOsBtn');
+        const resultsCard = document.getElementById('resultsCard');
+        const maintenanceResults = document.getElementById('maintenanceResults');
+        const osResults = document.getElementById('osResults');
+        const totalDiscount = document.getElementById('totalDiscount');
+        const osTemplate = document.getElementById('osTemplate');
 
         // Estado da aplicação
-        let editingId = null;
-        let currentUser = null;
+        let osCount = 0;
+        const maxOs = 5;
 
         // Inicialização
         document.addEventListener('DOMContentLoaded', function() {
-            setupAuth();
             setupEventListeners();
             setCurrentDateTime();
+            addOsItem(); // Adiciona o primeiro item de OS
         });
 
         function setupEventListeners() {
             // Atualiza bairros quando a cidade muda
-            citySelect.addEventListener('change', function() {
+            searchCity.addEventListener('change', function() {
                 updateNeighborhoods();
             });
 
             // Form submission
-            maintenanceForm.addEventListener('submit', function(e) {
+            searchForm.addEventListener('submit', function(e) {
                 e.preventDefault();
-                saveMaintenance();
+                calculateDiscounts();
             });
 
-            // Cancel button
-            cancelBtn.addEventListener('click', function() {
-                cancelEdit();
-            });
-        }
-
-        function setupAuth() {
-            // Verifica estado de autenticação
-            auth.onAuthStateChanged(user => {
-                if (user) {
-                    checkAuthorizedUser(user);
+            // Adicionar OS
+            addOsBtn.addEventListener('click', function() {
+                if (osCount < maxOs) {
+                    addOsItem();
                 } else {
-                    showLogin();
+                    alert('Máximo de 5 OS avulsas permitidas.');
                 }
             });
 
-            // Login
-            loginForm.addEventListener('submit', e => {
-                e.preventDefault();
-                const email = loginEmail.value;
-                const password = loginPassword.value;
-                
-                auth.signInWithEmailAndPassword(email, password)
-                    .then(userCredential => {
-                        checkAuthorizedUser(userCredential.user);
-                    })
-                    .catch(error => {
-                        loginError.textContent = error.message;
-                        loginError.style.display = 'block';
-                    });
+            // Remover OS (delegação de eventos)
+            osContainer.addEventListener('click', function(e) {
+                if (e.target.classList.contains('remove-os-btn')) {
+                    e.target.closest('.os-item').remove();
+                    osCount--;
+                }
             });
-
-            // Logout
-            logoutBtn.addEventListener('click', () => {
-                auth.signOut();
-            });
-        }
-
-        function checkAuthorizedUser(user) {
-            const allowedEmails = [
-                'bioranss@gmail.com', 
-                'atendente@sejafibra.net', 
-                'supervisor@sejafibra.net'
-            ];
-            
-            if (allowedEmails.includes(user.email)) {
-                currentUser = user;
-                currentUserEmail.textContent = user.email;
-                showApp();
-                loadMaintenances();
-            } else {
-                alert('Acesso não autorizado. Você será desconectado.');
-                auth.signOut();
-            }
-        }
-
-        function showLogin() {
-            loginSection.style.display = 'block';
-            appContent.style.display = 'none';
-            loginForm.reset();
-            loginError.style.display = 'none';
-        }
-
-        function showApp() {
-            loginSection.style.display = 'none';
-            appContent.style.display = 'block';
         }
 
         function updateNeighborhoods() {
-            const city = citySelect.value;
-            neighborhoodSelect.innerHTML = '<option value="">Selecione um bairro</option>';
+            const city = searchCity.value;
+            searchNeighborhood.innerHTML = '<option value="">Selecione um bairro</option>';
             
             if (city) {
-                neighborhoodSelect.disabled = false;
+                searchNeighborhood.disabled = false;
                 neighborhoods[city].forEach(neighborhood => {
                     const option = document.createElement('option');
                     option.value = neighborhood;
                     option.textContent = neighborhood;
-                    neighborhoodSelect.appendChild(option);
+                    searchNeighborhood.appendChild(option);
                 });
             } else {
-                neighborhoodSelect.disabled = true;
+                searchNeighborhood.disabled = true;
             }
         }
 
         function setCurrentDateTime() {
             const now = new Date();
-            // Ajusta para o fuso horário local e formata para o input datetime-local
             const timezoneOffset = now.getTimezoneOffset() * 60000;
             const localISOTime = new Date(now - timezoneOffset).toISOString().slice(0, 16);
-            startDateInput.value = localISOTime;
+            
+            // Define o período inicial como 7 dias atrás
+            const sevenDaysAgo = new Date(now - (7 * 24 * 60 * 60 * 1000));
+            const sevenDaysAgoISO = new Date(sevenDaysAgo - timezoneOffset).toISOString().slice(0, 16);
+            
+            startPeriod.value = sevenDaysAgoISO;
+            endPeriod.value = localISOTime;
         }
 
-        function saveMaintenance() {
-            const city = citySelect.value;
-            const neighborhood = neighborhoodSelect.value;
-            const problemType = problemTypeSelect.value;
-            const responsible = responsibleInput.value.trim();
-            const startDate = startDateInput.value;
-            const endDate = endDateInput.value;
-            const id = maintenanceIdInput.value || database.ref().child('maintenances').push().key;
+        function addOsItem() {
+            const osClone = osTemplate.content.cloneNode(true);
+            osContainer.appendChild(osClone);
+            osCount++;
+        }
 
-            if (!city || !neighborhood || !problemType || !responsible || !startDate) {
+        function calculateDiscounts() {
+            const city = searchCity.value;
+            const neighborhood = searchNeighborhood.value;
+            const start = startPeriod.value;
+            const end = endPeriod.value;
+            const tvValue = parseFloat(tvPlanValue.value);
+            const internetValue = parseFloat(internetPlanValue.value);
+
+            if (!city || !neighborhood || !start || !end || isNaN(tvValue) || isNaN(internetValue)) {
                 alert('Preencha todos os campos obrigatórios!');
                 return;
             }
 
-            const maintenanceData = {
-                city,
-                neighborhood,
-                problemType,
-                responsible,
-                startDate,
-                endDate,
-                updatedAt: firebase.database.ServerValue.TIMESTAMP,
-                updatedBy: currentUser.email
-            };
+            // Converter para objetos Date
+            const startDate = new Date(start);
+            const endDate = new Date(end);
 
-            const updates = {};
-            updates['/maintenances/' + id] = maintenanceData;
-
-            database.ref().update(updates)
-                .then(() => {
-                    alert('Manutenção salva com sucesso!');
-                    resetForm();
-                })
-                .catch(error => {
-                    console.error('Erro ao salvar:', error);
-                    alert('Erro ao salvar manutenção: ' + error.message);
-                });
-        }
-
-        function loadMaintenances() {
-            database.ref('maintenances').orderByChild('updatedAt').limitToLast(10).on('value', snapshot => {
-                maintenanceTable.innerHTML = '';
-                
-                if (!snapshot.exists()) {
-                    maintenanceTable.innerHTML = '<tr><td colspan="8" class="text-center">Nenhuma manutenção cadastrada</td></tr>';
-                    return;
-                }
-
-                // Converte para array e ordena por data (mais recente primeiro)
-                const maintenances = [];
-                snapshot.forEach(childSnapshot => {
-                    maintenances.push({
-                        id: childSnapshot.key,
-                        ...childSnapshot.val()
-                    });
-                });
-
-                maintenances.sort((a, b) => b.updatedAt - a.updatedAt);
-
-                maintenances.forEach(maintenance => {
-                    const row = document.createElement('tr');
-                    
-                    // Formata datas
-                    const startDate = formatDateTime(maintenance.startDate);
-                    const endDate = maintenance.endDate ? formatDateTime(maintenance.endDate) : '-';
-                    
-                    // Determina status
-                    const status = maintenance.endDate ? 
-                        '<span class="status-badge status-completed">Concluído</span>' : 
-                        '<span class="status-badge status-active">Em Andamento</span>';
-
-                    row.innerHTML = `
-                        <td>${maintenance.city}</td>
-                        <td>${maintenance.neighborhood}</td>
-                        <td>${maintenance.problemType}</td>
-                        <td>${maintenance.responsible}</td>
-                        <td>${startDate}</td>
-                        <td>${endDate}</td>
-                        <td>${status}</td>
-                        <td>
-                            <button class="btn btn-sm btn-warning btn-action edit-btn" data-id="${maintenance.id}">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="btn btn-sm btn-danger btn-action delete-btn" data-id="${maintenance.id}">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </td>
-                    `;
-                    
-                    maintenanceTable.appendChild(row);
-                });
-
-                // Adiciona eventos aos botões
-                document.querySelectorAll('.edit-btn').forEach(btn => {
-                    btn.addEventListener('click', function() {
-                        editMaintenance(this.getAttribute('data-id'));
-                    });
-                });
-
-                document.querySelectorAll('.delete-btn').forEach(btn => {
-                    btn.addEventListener('click', function() {
-                        deleteMaintenance(this.getAttribute('data-id'));
-                    });
-                });
-            });
-        }
-
-        function editMaintenance(id) {
-            database.ref('maintenances/' + id).once('value')
-                .then(snapshot => {
-                    if (snapshot.exists()) {
-                        const data = snapshot.val();
-                        
-                        // Preenche o formulário
-                        citySelect.value = data.city;
-                        updateNeighborhoods();
-                        setTimeout(() => {
-                            neighborhoodSelect.value = data.neighborhood;
-                        }, 100);
-                        
-                        problemTypeSelect.value = data.problemType;
-                        responsibleInput.value = data.responsible;
-                        startDateInput.value = data.startDate;
-                        endDateInput.value = data.endDate || '';
-                        maintenanceIdInput.value = id;
-                        
-                        // Altera o botão para "Atualizar"
-                        saveBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Atualizar';
-                        cancelBtn.style.display = 'block';
-                        
-                        // Rola para o formulário
-                        document.querySelector('.form-section').scrollIntoView({ behavior: 'smooth' });
-                    }
-                })
-                .catch(error => {
-                    console.error('Erro ao carregar manutenção:', error);
-                    alert('Erro ao carregar manutenção para edição');
-                });
-        }
-
-        function deleteMaintenance(id) {
-            if (confirm('Tem certeza que deseja excluir esta manutenção?')) {
-                database.ref('maintenances/' + id).remove()
-                    .then(() => {
-                        alert('Manutenção excluída com sucesso!');
-                    })
-                    .catch(error => {
-                        console.error('Erro ao excluir:', error);
-                        alert('Erro ao excluir manutenção');
-                    });
+            if (startDate >= endDate) {
+                alert('A data final deve ser maior que a data inicial!');
+                return;
             }
+
+            // Buscar manutenções no Firebase
+            database.ref('maintenances')
+                .orderByChild('neighborhood')
+                .equalTo(neighborhood)
+                .once('value')
+                .then(snapshot => {
+                    const maintenances = [];
+                    if (snapshot.exists()) {
+                        snapshot.forEach(childSnapshot => {
+                            const maintenance = childSnapshot.val();
+                            // Filtra por período selecionado
+                            const maintenanceStart = new Date(maintenance.startDate);
+                            const maintenanceEnd = maintenance.endDate ? new Date(maintenance.endDate) : new Date();
+                            
+                            if ((maintenanceStart <= endDate && maintenanceEnd >= startDate)) {
+                                maintenances.push({
+                                    ...maintenance,
+                                    id: childSnapshot.key
+                                });
+                            }
+                        });
+                    }
+
+                    // Processar OS avulsas
+                    const osItems = processOsItems();
+
+                    // Calcular descontos
+                    const discounts = calculateAllDiscounts(maintenances, osItems, tvValue, internetValue, startDate, endDate);
+
+                    // Exibir resultados
+                    displayResults(discounts, tvValue, internetValue);
+                })
+                .catch(error => {
+                    console.error('Erro ao buscar manutenções:', error);
+                    alert('Erro ao calcular descontos. Por favor, tente novamente.');
+                });
         }
 
-        function cancelEdit() {
-            resetForm();
+        function processOsItems() {
+            const osItems = [];
+            const osElements = osContainer.querySelectorAll('.os-item');
+            
+            osElements.forEach(osElement => {
+                const type = osElement.querySelector('.os-type').value;
+                const start = osElement.querySelector('.os-start').value;
+                const end = osElement.querySelector('.os-end').value;
+                
+                if (start && end) {
+                    osItems.push({
+                        type,
+                        startDate: start,
+                        endDate: end
+                    });
+                }
+            });
+            
+            return osItems;
         }
 
-        function resetForm() {
-            maintenanceForm.reset();
-            maintenanceIdInput.value = '';
-            neighborhoodSelect.disabled = true;
-            neighborhoodSelect.innerHTML = '<option value="">Selecione primeiro a cidade</option>';
-            setCurrentDateTime();
-            saveBtn.innerHTML = '<i class="fas fa-save"></i> Salvar';
-            cancelBtn.style.display = 'none';
+        function calculateAllDiscounts(maintenances, osItems, tvValue, internetValue, periodStart, periodEnd) {
+            // Valores por minuto
+            const tvPerMinute = tvValue / (30 * 24 * 60); // Valor mensal dividido por minutos em um mês (30 dias)
+            const internetPerMinute = internetValue / (30 * 24 * 60);
+
+            // Inicializa totais
+            let totalTvDiscount = 0;
+            let totalInternetDiscount = 0;
+            let maintenanceDetails = [];
+            let osDetails = [];
+
+            // Calcula descontos por manutenções
+            maintenances.forEach(maintenance => {
+                const maintenanceStart = new Date(maintenance.startDate);
+                const maintenanceEnd = maintenance.endDate ? new Date(maintenance.endDate) : new Date();
+                
+                // Ajusta para o período selecionado
+                const effectiveStart = maintenanceStart < periodStart ? periodStart : maintenanceStart;
+                const effectiveEnd = maintenanceEnd > periodEnd ? periodEnd : maintenanceEnd;
+                
+                const durationMinutes = (effectiveEnd - effectiveStart) / (1000 * 60);
+                
+                if (durationMinutes > 0) {
+                    let tvMinutes = 0;
+                    let internetMinutes = 0;
+                    
+                    if (maintenance.problemType === 'TV') {
+                        tvMinutes = durationMinutes;
+                    } else if (maintenance.problemType === 'Internet') {
+                        internetMinutes = durationMinutes;
+                    } else { // Geral - afeta ambos
+                        tvMinutes = durationMinutes;
+                        internetMinutes = durationMinutes;
+                    }
+                    
+                    const tvDiscount = tvMinutes * tvPerMinute;
+                    const internetDiscount = internetMinutes * internetPerMinute;
+                    
+                    totalTvDiscount += tvDiscount;
+                    totalInternetDiscount += internetDiscount;
+                    
+                    maintenanceDetails.push({
+                        type: maintenance.problemType,
+                        start: formatDateTime(maintenance.startDate),
+                        end: maintenance.endDate ? formatDateTime(maintenance.endDate) : 'Em andamento',
+                        duration: formatDuration(durationMinutes),
+                        tvDiscount: tvDiscount.toFixed(2),
+                        internetDiscount: internetDiscount.toFixed(2)
+                    });
+                }
+            });
+
+            // Calcula descontos por OS avulsas
+            osItems.forEach((os, index) => {
+                const osStart = new Date(os.startDate);
+                const osEnd = new Date(os.endDate);
+                
+                const durationMinutes = (osEnd - osStart) / (1000 * 60);
+                
+                if (durationMinutes > 0) {
+                    let tvMinutes = 0;
+                    let internetMinutes = 0;
+                    
+                    if (os.type === 'TV') {
+                        tvMinutes = durationMinutes;
+                    } else if (os.type === 'Internet') {
+                        internetMinutes = durationMinutes;
+                    } else { // Geral - afeta ambos
+                        tvMinutes = durationMinutes;
+                        internetMinutes = durationMinutes;
+                    }
+                    
+                    const tvDiscount = tvMinutes * tvPerMinute;
+                    const internetDiscount = internetMinutes * internetPerMinute;
+                    
+                    totalTvDiscount += tvDiscount;
+                    totalInternetDiscount += internetDiscount;
+                    
+                    osDetails.push({
+                        number: index + 1,
+                        type: os.type,
+                        start: formatDateTime(os.startDate),
+                        end: formatDateTime(os.endDate),
+                        duration: formatDuration(durationMinutes),
+                        tvDiscount: tvDiscount.toFixed(2),
+                        internetDiscount: internetDiscount.toFixed(2)
+                    });
+                }
+            });
+
+            return {
+                totalTvDiscount,
+                totalInternetDiscount,
+                totalDiscount: totalTvDiscount + totalInternetDiscount,
+                maintenanceDetails,
+                osDetails,
+                tvPerMinute,
+                internetPerMinute
+            };
+        }
+
+        function displayResults(discounts, tvValue, internetValue) {
+            // Limpa resultados anteriores
+            maintenanceResults.innerHTML = '';
+            osResults.innerHTML = '';
+
+            // Exibe descontos por manutenções
+            if (discounts.maintenanceDetails.length > 0) {
+                discounts.maintenanceDetails.forEach(detail => {
+                    const item = document.createElement('div');
+                    item.className = 'mb-2';
+                    item.innerHTML = `
+                        <strong>${detail.type}</strong> - ${detail.start} até ${detail.end}
+                        <div class="time-diff">Duração: ${detail.duration}</div>
+                        ${detail.tvDiscount > 0 ? `<div>TV: R$ ${detail.tvDiscount}</div>` : ''}
+                        ${detail.internetDiscount > 0 ? `<div>Internet: R$ ${detail.internetDiscount}</div>` : ''}
+                    `;
+                    maintenanceResults.appendChild(item);
+                });
+            } else {
+                maintenanceResults.innerHTML = '<div class="text-muted">Nenhuma manutenção encontrada no período.</div>';
+            }
+
+            // Exibe descontos por OS avulsas
+            if (discounts.osDetails.length > 0) {
+                discounts.osDetails.forEach(detail => {
+                    const item = document.createElement('div');
+                    item.className = 'mb-2';
+                    item.innerHTML = `
+                        <strong>OS ${detail.number} (${detail.type})</strong> - ${detail.start} até ${detail.end}
+                        <div class="time-diff">Duração: ${detail.duration}</div>
+                        ${detail.tvDiscount > 0 ? `<div>TV: R$ ${detail.tvDiscount}</div>` : ''}
+                        ${detail.internetDiscount > 0 ? `<div>Internet: R$ ${detail.internetDiscount}</div>` : ''}
+                    `;
+                    osResults.appendChild(item);
+                });
+            } else {
+                osResults.innerHTML = '<div class="text-muted">Nenhuma OS avulsa informada.</div>';
+            }
+
+            // Exibe totais
+            const totalDiscountValue = discounts.totalDiscount.toFixed(2);
+            totalDiscount.textContent = `R$ ${totalDiscountValue}`;
+
+            // Exibe valores por minuto (para referência)
+            const referenceInfo = document.createElement('div');
+            referenceInfo.className = 'mt-3 small text-muted';
+            referenceInfo.innerHTML = `
+                <div>Valor minuto TV: R$ ${discounts.tvPerMinute.toFixed(6)}</div>
+                <div>Valor minuto Internet: R$ ${discounts.internetPerMinute.toFixed(6)}</div>
+                <div>Base: TV R$ ${tvValue.toFixed(2)} | Internet R$ ${internetValue.toFixed(2)}</div>
+            `;
+            osResults.appendChild(referenceInfo);
+
+            // Mostra o card de resultados
+            resultsCard.style.display = 'block';
         }
 
         function formatDateTime(dateTimeString) {
@@ -547,6 +551,17 @@
                 hour: '2-digit',
                 minute: '2-digit'
             });
+        }
+
+        function formatDuration(minutes) {
+            const hours = Math.floor(minutes / 60);
+            const remainingMinutes = Math.floor(minutes % 60);
+            
+            if (hours > 0) {
+                return `${hours}h ${remainingMinutes}min`;
+            } else {
+                return `${remainingMinutes}min`;
+            }
         }
     </script>
 </body>
