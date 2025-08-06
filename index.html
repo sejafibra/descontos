@@ -49,6 +49,13 @@
             font-size: 0.9rem;
             color: #6c757d;
         }
+        .discount-item {
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: #fff;
+            border-radius: 5px;
+            border-left: 3px solid #0d6efd;
+        }
     </style>
 </head>
 <body>
@@ -96,11 +103,11 @@
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="tvPlanValue" class="form-label">Valor do Plano TV (R$)</label>
-                            <input type="number" step="0.01" class="form-control" id="tvPlanValue" required>
+                            <input type="number" step="0.01" min="0" class="form-control" id="tvPlanValue" required>
                         </div>
                         <div class="col-md-6">
                             <label for="internetPlanValue" class="form-label">Valor do Plano Internet (R$)</label>
-                            <input type="number" step="0.01" class="form-control" id="internetPlanValue" required>
+                            <input type="number" step="0.01" min="0" class="form-control" id="internetPlanValue" required>
                         </div>
                     </div>
                     
@@ -306,10 +313,10 @@
             const neighborhood = searchNeighborhood.value;
             const start = startPeriod.value;
             const end = endPeriod.value;
-            const tvValue = parseFloat(tvPlanValue.value);
-            const internetValue = parseFloat(internetPlanValue.value);
+            const tvValue = parseFloat(tvPlanValue.value) || 0;
+            const internetValue = parseFloat(internetPlanValue.value) || 0;
 
-            if (!city || !neighborhood || !start || !end || isNaN(tvValue) || isNaN(internetValue)) {
+            if (!city || !neighborhood || !start || !end) {
                 alert('Preencha todos os campos obrigatórios!');
                 return;
             }
@@ -357,7 +364,7 @@
                 })
                 .catch(error => {
                     console.error('Erro ao buscar manutenções:', error);
-                    alert('Erro ao calcular descontos. Por favor, tente novamente.');
+                    alert('Erro ao calcular descontos. Por favor, verifique os dados e tente novamente.');
                 });
         }
 
@@ -383,9 +390,9 @@
         }
 
         function calculateAllDiscounts(maintenances, osItems, tvValue, internetValue, periodStart, periodEnd) {
-            // Valores por minuto
-            const tvPerMinute = tvValue / (30 * 24 * 60); // Valor mensal dividido por minutos em um mês (30 dias)
-            const internetPerMinute = internetValue / (30 * 24 * 60);
+            // Valores por minuto (considerando 30 dias no mês)
+            const tvPerMinute = tvValue > 0 ? tvValue / (30 * 24 * 60) : 0;
+            const internetPerMinute = internetValue > 0 ? internetValue / (30 * 24 * 60) : 0;
 
             // Inicializa totais
             let totalTvDiscount = 0;
@@ -492,12 +499,13 @@
             if (discounts.maintenanceDetails.length > 0) {
                 discounts.maintenanceDetails.forEach(detail => {
                     const item = document.createElement('div');
-                    item.className = 'mb-2';
+                    item.className = 'discount-item';
                     item.innerHTML = `
-                        <strong>${detail.type}</strong> - ${detail.start} até ${detail.end}
-                        <div class="time-diff">Duração: ${detail.duration}</div>
-                        ${detail.tvDiscount > 0 ? `<div>TV: R$ ${detail.tvDiscount}</div>` : ''}
-                        ${detail.internetDiscount > 0 ? `<div>Internet: R$ ${detail.internetDiscount}</div>` : ''}
+                        <div><strong>Tipo:</strong> ${detail.type}</div>
+                        <div><strong>Período:</strong> ${detail.start} até ${detail.end}</div>
+                        <div class="time-diff"><strong>Duração:</strong> ${detail.duration}</div>
+                        ${detail.tvDiscount > 0 ? `<div><strong>Desconto TV:</strong> R$ ${detail.tvDiscount}</div>` : ''}
+                        ${detail.internetDiscount > 0 ? `<div><strong>Desconto Internet:</strong> R$ ${detail.internetDiscount}</div>` : ''}
                     `;
                     maintenanceResults.appendChild(item);
                 });
@@ -509,12 +517,13 @@
             if (discounts.osDetails.length > 0) {
                 discounts.osDetails.forEach(detail => {
                     const item = document.createElement('div');
-                    item.className = 'mb-2';
+                    item.className = 'discount-item';
                     item.innerHTML = `
-                        <strong>OS ${detail.number} (${detail.type})</strong> - ${detail.start} até ${detail.end}
-                        <div class="time-diff">Duração: ${detail.duration}</div>
-                        ${detail.tvDiscount > 0 ? `<div>TV: R$ ${detail.tvDiscount}</div>` : ''}
-                        ${detail.internetDiscount > 0 ? `<div>Internet: R$ ${detail.internetDiscount}</div>` : ''}
+                        <div><strong>OS ${detail.number}:</strong> ${detail.type}</div>
+                        <div><strong>Período:</strong> ${detail.start} até ${detail.end}</div>
+                        <div class="time-diff"><strong>Duração:</strong> ${detail.duration}</div>
+                        ${detail.tvDiscount > 0 ? `<div><strong>Desconto TV:</strong> R$ ${detail.tvDiscount}</div>` : ''}
+                        ${detail.internetDiscount > 0 ? `<div><strong>Desconto Internet:</strong> R$ ${detail.internetDiscount}</div>` : ''}
                     `;
                     osResults.appendChild(item);
                 });
@@ -530,14 +539,15 @@
             const referenceInfo = document.createElement('div');
             referenceInfo.className = 'mt-3 small text-muted';
             referenceInfo.innerHTML = `
-                <div>Valor minuto TV: R$ ${discounts.tvPerMinute.toFixed(6)}</div>
-                <div>Valor minuto Internet: R$ ${discounts.internetPerMinute.toFixed(6)}</div>
-                <div>Base: TV R$ ${tvValue.toFixed(2)} | Internet R$ ${internetValue.toFixed(2)}</div>
+                <div><strong>Valor minuto TV:</strong> R$ ${discounts.tvPerMinute.toFixed(6)}</div>
+                <div><strong>Valor minuto Internet:</strong> R$ ${discounts.internetPerMinute.toFixed(6)}</div>
+                <div><strong>Base:</strong> TV R$ ${tvValue.toFixed(2)} | Internet R$ ${internetValue.toFixed(2)}</div>
             `;
             osResults.appendChild(referenceInfo);
 
             // Mostra o card de resultados
             resultsCard.style.display = 'block';
+            resultsCard.scrollIntoView({ behavior: 'smooth' });
         }
 
         function formatDateTime(dateTimeString) {
