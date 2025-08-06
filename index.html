@@ -56,6 +56,10 @@
             border-radius: 5px;
             border-left: 3px solid #0d6efd;
         }
+        #loadingSpinner {
+            display: none;
+            margin: 20px auto;
+        }
     </style>
 </head>
 <body>
@@ -111,9 +115,12 @@
                         </div>
                     </div>
                     
-                    <button type="submit" class="btn btn-primary">
+                    <button type="submit" class="btn btn-primary" id="calculateBtn">
                         <i class="fas fa-calculator"></i> Calcular Descontos
                     </button>
+                    <div id="loadingSpinner" class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Carregando...</span>
+                    </div>
                 </form>
             </div>
         </div>
@@ -189,12 +196,13 @@
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
     
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
     <script>
-        // Configuração do Firebase (mesmo do projeto anterior)
+        // Configuração do Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyC95aDwbm43uv7UPB7YDT5VjCe5USz2mZ8",
             authDomain: "descontos-4ab4b.firebaseapp.com",
@@ -205,9 +213,10 @@
             appId: "1:907559767912:web:d9974a77e46a5ef08ed0dd"
         };
 
-        // Inicializa o Firebase (apenas Database)
+        // Inicializa o Firebase
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
+        const auth = firebase.auth();
 
         // Mapeamento de bairros por cidade
         const neighborhoods = {
@@ -230,6 +239,8 @@
         const osResults = document.getElementById('osResults');
         const totalDiscount = document.getElementById('totalDiscount');
         const osTemplate = document.getElementById('osTemplate');
+        const calculateBtn = document.getElementById('calculateBtn');
+        const loadingSpinner = document.getElementById('loadingSpinner');
 
         // Estado da aplicação
         let osCount = 0;
@@ -240,7 +251,18 @@
             setupEventListeners();
             setCurrentDateTime();
             addOsItem(); // Adiciona o primeiro item de OS
+            authenticateAnonymously();
         });
+
+        function authenticateAnonymously() {
+            auth.signInAnonymously()
+                .then(() => {
+                    console.log("Autenticado anonimamente com sucesso");
+                })
+                .catch(error => {
+                    console.error("Erro na autenticação anônima:", error);
+                });
+        }
 
         function setupEventListeners() {
             // Atualiza bairros quando a cidade muda
@@ -330,6 +352,10 @@
                 return;
             }
 
+            // Mostra spinner e desabilita botão
+            calculateBtn.disabled = true;
+            loadingSpinner.style.display = 'block';
+
             // Buscar manutenções no Firebase
             database.ref('maintenances')
                 .orderByChild('neighborhood')
@@ -364,7 +390,12 @@
                 })
                 .catch(error => {
                     console.error('Erro ao buscar manutenções:', error);
-                    alert('Erro ao calcular descontos. Por favor, verifique os dados e tente novamente.');
+                    alert('Erro ao calcular descontos. Por favor, verifique se as regras de segurança do Firebase estão configuradas corretamente.');
+                })
+                .finally(() => {
+                    // Esconde spinner e habilita botão
+                    calculateBtn.disabled = false;
+                    loadingSpinner.style.display = 'none';
                 });
         }
 
