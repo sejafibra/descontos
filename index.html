@@ -108,13 +108,13 @@
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav me-auto">
                         <li class="nav-item">
-                            <a class="nav-link active" href="#" data-bs-target="#register-tab" data-bs-toggle="tab">Registrar</a>
+                            <a class="nav-link active" href="#" id="register-tab-link">Registrar</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#" data-bs-target="#list-tab" data-bs-toggle="tab">Listagem</a>
+                            <a class="nav-link" href="#" id="list-tab-link">Listagem</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#" data-bs-target="#statistics-tab" data-bs-toggle="tab">Estatísticas</a>
+                            <a class="nav-link" href="#" id="stats-tab-link">Estatísticas</a>
                         </li>
                     </ul>
                     <span id="userEmail" class="text-white me-3"></span>
@@ -306,13 +306,17 @@
         function loadNeighborhoods(city) {
             const neighborhoodSelect = document.getElementById('maintenanceNeighborhood');
             neighborhoodSelect.innerHTML = '<option value="" disabled selected>Selecione um bairro</option>';
-            neighborhoodSelect.disabled = !city;
             
             if (city && CITIES_DATA[city]) {
                 CITIES_DATA[city].forEach(neighborhood => {
-                    neighborhoodSelect.add(new Option(neighborhood, neighborhood));
+                    const option = document.createElement('option');
+                    option.value = neighborhood;
+                    option.textContent = neighborhood;
+                    neighborhoodSelect.appendChild(option);
                 });
                 neighborhoodSelect.disabled = false;
+            } else {
+                neighborhoodSelect.disabled = true;
             }
         }
 
@@ -341,7 +345,8 @@
                     document.querySelector('#maintenanceForm button[type="submit"]').textContent = 'Atualizar';
                     
                     // Navega para a aba de registro
-                    new bootstrap.Tab(document.querySelector('#register-tab')).show();
+                    const tab = new bootstrap.Tab(document.querySelector('#register-tab'));
+                    tab.show();
                 }
             }, 100);
         }
@@ -368,6 +373,31 @@
                 loadNeighborhoods(this.value);
             });
 
+            // Configura navegação por tabs
+            document.getElementById('register-tab-link').addEventListener('click', function(e) {
+                e.preventDefault();
+                new bootstrap.Tab(document.querySelector('#register-tab')).show();
+                this.classList.add('active');
+                document.getElementById('list-tab-link').classList.remove('active');
+                document.getElementById('stats-tab-link').classList.remove('active');
+            });
+
+            document.getElementById('list-tab-link').addEventListener('click', function(e) {
+                e.preventDefault();
+                new bootstrap.Tab(document.querySelector('#list-tab')).show();
+                this.classList.add('active');
+                document.getElementById('register-tab-link').classList.remove('active');
+                document.getElementById('stats-tab-link').classList.remove('active');
+            });
+
+            document.getElementById('stats-tab-link').addEventListener('click', function(e) {
+                e.preventDefault();
+                new bootstrap.Tab(document.querySelector('#statistics-tab')).show();
+                this.classList.add('active');
+                document.getElementById('register-tab-link').classList.remove('active');
+                document.getElementById('list-tab-link').classList.remove('active');
+            });
+
             // Define data/hora atual como padrão
             const now = new Date();
             document.getElementById('startDate').value = now.toISOString().slice(0, 16);
@@ -392,16 +422,6 @@
             document.getElementById('logoutBtn').addEventListener('click', () => {
                 auth.signOut().then(() => {
                     window.location.href = 'login.html';
-                });
-            });
-
-            // Configura navegação por tabs
-            document.querySelectorAll('.nav-link').forEach(link => {
-                link.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const target = this.getAttribute('data-bs-target');
-                    const tab = new bootstrap.Tab(target);
-                    tab.show();
                 });
             });
         });
@@ -434,7 +454,7 @@
                         maintenanceData.endDate = new Date(document.getElementById('endDate').value).getTime();
                         maintenanceData.duration = Math.round(
                             (new Date(document.getElementById('endDate').value) - 
-                             new Date(document.getElementById('startDate').value)) / (1000 * 60);
+                            new Date(document.getElementById('startDate').value) / (1000 * 60);
                     }
 
                     if (form.docId.value) {
