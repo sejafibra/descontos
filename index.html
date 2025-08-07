@@ -62,6 +62,9 @@
             display: none;
             margin: 20px auto;
         }
+        .city-wide {
+            border-left: 3px solid #28a745;
+        }
     </style>
 </head>
 <body>
@@ -220,10 +223,10 @@
         const database = firebase.database();
         const auth = firebase.auth();
 
-        // Mapeamento de bairros por cidade (incluindo opções de cidade inteira)
+        // Mapeamento de bairros por cidade
         const neighborhoods = {
-            'Ubatuba': ['Ubatuba (Toda Cidade)', 'Acaraú', 'Barra da Lagoa', 'Barra-Seca', 'Caçandoca', 'Centro', 'Emaús', 'Enseada', 'Estufa 1', 'Estufa 2', 'Ipiranguinha', 'Itaguá', 'Itamambuca', 'Jardim Carolina', 'Lagoinha', 'Lázaro', 'Marafunda', 'Maranduba', 'Parque Dos Ministérios', 'Parque Guarani', 'Parque Vivamar', 'Pedra Verde', 'Pedreira', 'Perequê-Açú', 'Pereque-Mirim', 'Praia Do Pulso', 'Praia Dura', 'Praia Grande', 'Rio Escuro', 'Santa Rita', 'Sapé', 'Sertão Da Quina', 'Silop', 'Sumaré', 'Sumidouro', 'Taquaral', 'Taquaral (Angelim)', 'Taquaral (Vila Resende)', 'Tenório', 'Toninhas', 'Umuarama', 'Vale Do Sol', 'Vila Sumaré'],
-            'Caraguatatuba': ['Caraguá (Toda Cidade)', 'Alamedas dos Pessegueiros', 'Alamedas das Amendoeiras', 'Alamedas das Cerejeiras', 'Alamedas Das Figueiras', 'Alamedas Dos Castanheiros', 'Araguais', 'Barranco Alto', 'Caputera', 'Casa Branca', 'Centro', 'Cidade Jardim', 'Cond Res Vilaggio Portofino', 'Cond. Beira Mar (Martim De Sá)', 'Cond. Gaivotas', 'Costa Nova', 'Costa Verde', 'Getuba', 'Golfinhos', 'Ilhas Canárias', 'Jaraguazinho', 'Jardim Capricornio', 'Jardim Gaivotas', 'Jardim Primavera', 'Jardim Santa Rosa (Chocolate)', 'Jardim Terralão', 'Martim De Sá', 'Massaguaçu', 'Morro Do Algodão', 'Olaria', 'Parque Imperial', 'Pereque', 'Poiares', 'Ponte Seca', 'Portal Fazendinha', 'Portal Patrimonio', 'Praia Da Mococa', 'Prainha', 'Rio Do Ouro', 'Sumaré', 'Tabatinga', 'Terralão', 'Tocantins', 'Travessão', 'Loteamento Morada Do Mar', 'Indaiá', 'Jardim California', 'Jardim Jaqueira', 'Tinga']
+            'Ubatuba': ['Acaraú', 'Barra da Lagoa', 'Barra-Seca', 'Caçandoca', 'Centro', 'Emaús', 'Enseada', 'Estufa 1', 'Estufa 2', 'Ipiranguinha', 'Itaguá', 'Itamambuca', 'Jardim Carolina', 'Lagoinha', 'Lázaro', 'Marafunda', 'Maranduba', 'Parque Dos Ministérios', 'Parque Guarani', 'Parque Vivamar', 'Pedra Verde', 'Pedreira', 'Perequê-Açú', 'Pereque-Mirim', 'Praia Do Pulso', 'Praia Dura', 'Praia Grande', 'Rio Escuro', 'Santa Rita', 'Sapé', 'Sertão Da Quina', 'Silop', 'Sumaré', 'Sumidouro', 'Taquaral', 'Taquaral (Angelim)', 'Taquaral (Vila Resende)', 'Tenório', 'Toninhas', 'Umuarama', 'Vale Do Sol', 'Vila Sumaré'],
+            'Caraguatatuba': ['Alamedas dos Pessegueiros', 'Alamedas das Amendoeiras', 'Alamedas das Cerejeiras', 'Alamedas Das Figueiras', 'Alamedas Dos Castanheiros', 'Araguais', 'Barranco Alto', 'Caputera', 'Casa Branca', 'Centro', 'Cidade Jardim', 'Cond Res Vilaggio Portofino', 'Cond. Beira Mar (Martim De Sá)', 'Cond. Gaivotas', 'Costa Nova', 'Costa Verde', 'Getuba', 'Golfinhos', 'Ilhas Canárias', 'Jaraguazinho', 'Jardim Capricornio', 'Jardim Gaivotas', 'Jardim Primavera', 'Jardim Santa Rosa (Chocolate)', 'Jardim Terralão', 'Martim De Sá', 'Massaguaçu', 'Morro Do Algodão', 'Olaria', 'Parque Imperial', 'Pereque', 'Poiares', 'Ponte Seca', 'Portal Fazendinha', 'Portal Patrimonio', 'Praia Da Mococa', 'Prainha', 'Rio Do Ouro', 'Sumaré', 'Tabatinga', 'Terralão', 'Tocantins', 'Travessão', 'Loteamento Morada Do Mar', 'Indaiá', 'Jardim California', 'Jardim Jaqueira', 'Tinga']
         };
 
         // Referências do DOM
@@ -364,8 +367,8 @@
                 .equalTo(neighborhood);
             
             const cityWideQuery = database.ref('maintenances')
-                .orderByChild('neighborhood')
-                .equalTo(city === 'Ubatuba' ? 'Ubatuba (Toda Cidade)' : 'Caraguá (Toda Cidade)');
+                .orderByChild('cityWide')
+                .equalTo(true);
 
             // Executa ambas as consultas
             Promise.all([
@@ -391,19 +394,22 @@
                     });
                 }
                 
-                // Processa manutenções que afetam toda a cidade
+                // Processa manutenções que afetam toda a cidade (mesma cidade do bairro selecionado)
                 if (cityWideSnapshot.exists()) {
                     cityWideSnapshot.forEach(childSnapshot => {
                         const maintenance = childSnapshot.val();
-                        const maintenanceStart = new Date(maintenance.startDate);
-                        const maintenanceEnd = maintenance.endDate ? new Date(maintenance.endDate) : new Date();
-                        
-                        if ((maintenanceStart <= endDate && maintenanceEnd >= startDate)) {
-                            maintenances.push({
-                                ...maintenance,
-                                id: childSnapshot.key,
-                                isCityWide: true
-                            });
+                        // Verifica se é da mesma cidade
+                        if (maintenance.city === city) {
+                            const maintenanceStart = new Date(maintenance.startDate);
+                            const maintenanceEnd = maintenance.endDate ? new Date(maintenance.endDate) : new Date();
+                            
+                            if ((maintenanceStart <= endDate && maintenanceEnd >= startDate)) {
+                                maintenances.push({
+                                    ...maintenance,
+                                    id: childSnapshot.key,
+                                    isCityWide: true
+                                });
+                            }
                         }
                     });
                 }
@@ -560,7 +566,7 @@
             if (discounts.maintenanceDetails.length > 0) {
                 discounts.maintenanceDetails.forEach(detail => {
                     const item = document.createElement('div');
-                    item.className = 'discount-item';
+                    item.className = `discount-item ${detail.isCityWide ? 'city-wide' : ''}`;
                     item.innerHTML = `
                         <div><strong>Tipo:</strong> ${detail.type} ${detail.isCityWide ? '(Toda Cidade)' : ''}</div>
                         <div><strong>Período:</strong> ${detail.start} até ${detail.end}</div>
