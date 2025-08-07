@@ -220,11 +220,11 @@
         const database = firebase.database();
         const auth = firebase.auth();
 
-        // Mapeamento de bairros por cidade
+        // Mapeamento de bairros por cidade (incluindo opções de cidade inteira)
         const neighborhoods = {
-            'Ubatuba': ['Acaraú', 'Barra da Lagoa', 'Barra-Seca', 'Caçandoca', 'Centro', 'Emaús', 'Enseada', 'Estufa 1', 'Estufa 2', 'Ipiranguinha', 'Itaguá', 'Itamambuca', 'Jardim Carolina', 'Lagoinha', 'Lázaro', 'Marafunda', 'Maranduba', 'Parque Dos Ministérios', 'Parque Guarani', 'Parque Vivamar', 'Pedra Verde', 'Pedreira', 'Perequê-Açú', 'Pereque-Mirim', 'Praia Do Pulso', 'Praia Dura', 'Praia Grande', 'Rio Escuro', 'Santa Rita', 'Sapé', 'Sertão Da Quina', 'Silop', 'Sumaré', 'Sumidouro', 'Taquaral', 'Taquaral (Angelim)', 'Taquaral (Vila Resende)', 'Tenório', 'Toninhas', 'Umuarama', 'Vale Do Sol', 'Vila Sumaré'],
-            'Caraguatatuba': ['Alamedas dos Pessegueiros', 'Alamedas das Amendoeiras', 'Alamedas das Cerejeiras', 'Alamedas Das Figueiras', 'Alamedas Dos Castanheiros', 'Araguais', 'Barranco Alto', 'Caputera', 'Casa Branca', 'Centro', 'Cidade Jardim', 'Cond Res Vilaggio Portofino', 'Cond. Beira Mar (Martim De Sá)', 'Cond. Gaivotas', 'Costa Nova', 'Costa Verde', 'Getuba', 'Golfinhos', 'Ilhas Canárias', 'Jaraguazinho', 'Jardim Capricornio', 'Jardim Gaivotas', 'Jardim Primavera', 'Jardim Santa Rosa (Chocolate)', 'Jardim Terralão', 'Martim De Sá', 'Massaguaçu', 'Morro Do Algodão', 'Olaria', 'Parque Imperial', 'Pereque', 'Poiares', 'Ponte Seca', 'Portal Fazendinha', 'Portal Patrimonio', 'Praia Da Mococa', 'Prainha', 'Rio Do Ouro', 'Sumaré', 'Tabatinga', 'Terralão', 'Tocantins', 'Travessão', 'Loteamento Morada Do Mar', 'Indaiá', 'Jardim California', 'Jardim Jaqueira', 'Tinga']
-            };
+            'Ubatuba': ['Ubatuba (Toda Cidade)', 'Acaraú', 'Barra da Lagoa', 'Barra-Seca', 'Caçandoca', 'Centro', 'Emaús', 'Enseada', 'Estufa 1', 'Estufa 2', 'Ipiranguinha', 'Itaguá', 'Itamambuca', 'Jardim Carolina', 'Lagoinha', 'Lázaro', 'Marafunda', 'Maranduba', 'Parque Dos Ministérios', 'Parque Guarani', 'Parque Vivamar', 'Pedra Verde', 'Pedreira', 'Perequê-Açú', 'Pereque-Mirim', 'Praia Do Pulso', 'Praia Dura', 'Praia Grande', 'Rio Escuro', 'Santa Rita', 'Sapé', 'Sertão Da Quina', 'Silop', 'Sumaré', 'Sumidouro', 'Taquaral', 'Taquaral (Angelim)', 'Taquaral (Vila Resende)', 'Tenório', 'Toninhas', 'Umuarama', 'Vale Do Sol', 'Vila Sumaré'],
+            'Caraguatatuba': ['Caraguá (Toda Cidade)', 'Alamedas dos Pessegueiros', 'Alamedas das Amendoeiras', 'Alamedas das Cerejeiras', 'Alamedas Das Figueiras', 'Alamedas Dos Castanheiros', 'Araguais', 'Barranco Alto', 'Caputera', 'Casa Branca', 'Centro', 'Cidade Jardim', 'Cond Res Vilaggio Portofino', 'Cond. Beira Mar (Martim De Sá)', 'Cond. Gaivotas', 'Costa Nova', 'Costa Verde', 'Getuba', 'Golfinhos', 'Ilhas Canárias', 'Jaraguazinho', 'Jardim Capricornio', 'Jardim Gaivotas', 'Jardim Primavera', 'Jardim Santa Rosa (Chocolate)', 'Jardim Terralão', 'Martim De Sá', 'Massaguaçu', 'Morro Do Algodão', 'Olaria', 'Parque Imperial', 'Pereque', 'Poiares', 'Ponte Seca', 'Portal Fazendinha', 'Portal Patrimonio', 'Praia Da Mococa', 'Prainha', 'Rio Do Ouro', 'Sumaré', 'Tabatinga', 'Terralão', 'Tocantins', 'Travessão', 'Loteamento Morada Do Mar', 'Indaiá', 'Jardim California', 'Jardim Jaqueira', 'Tinga']
+        };
 
         // Referências do DOM
         const searchCity = document.getElementById('searchCity');
@@ -358,47 +358,74 @@
             calculateBtn.disabled = true;
             loadingSpinner.style.display = 'block';
 
-            // Buscar manutenções no Firebase
-            database.ref('maintenances')
+            // Buscar manutenções no Firebase - tanto para o bairro específico quanto para toda a cidade
+            const neighborhoodQuery = database.ref('maintenances')
                 .orderByChild('neighborhood')
-                .equalTo(neighborhood)
-                .once('value')
-                .then(snapshot => {
-                    const maintenances = [];
-                    if (snapshot.exists()) {
-                        snapshot.forEach(childSnapshot => {
-                            const maintenance = childSnapshot.val();
-                            // Filtra por período selecionado
-                            const maintenanceStart = new Date(maintenance.startDate);
-                            const maintenanceEnd = maintenance.endDate ? new Date(maintenance.endDate) : new Date();
-                            
-                            if ((maintenanceStart <= endDate && maintenanceEnd >= startDate)) {
-                                maintenances.push({
-                                    ...maintenance,
-                                    id: childSnapshot.key
-                                });
-                            }
-                        });
-                    }
+                .equalTo(neighborhood);
+            
+            const cityWideQuery = database.ref('maintenances')
+                .orderByChild('neighborhood')
+                .equalTo(city === 'Ubatuba' ? 'Ubatuba (Toda Cidade)' : 'Caraguá (Toda Cidade)');
 
-                    // Processar OS avulsas
-                    const osItems = processOsItems();
+            // Executa ambas as consultas
+            Promise.all([
+                neighborhoodQuery.once('value'),
+                cityWideQuery.once('value')
+            ]).then(([neighborhoodSnapshot, cityWideSnapshot]) => {
+                const maintenances = [];
+                
+                // Processa manutenções do bairro específico
+                if (neighborhoodSnapshot.exists()) {
+                    neighborhoodSnapshot.forEach(childSnapshot => {
+                        const maintenance = childSnapshot.val();
+                        const maintenanceStart = new Date(maintenance.startDate);
+                        const maintenanceEnd = maintenance.endDate ? new Date(maintenance.endDate) : new Date();
+                        
+                        if ((maintenanceStart <= endDate && maintenanceEnd >= startDate)) {
+                            maintenances.push({
+                                ...maintenance,
+                                id: childSnapshot.key,
+                                isCityWide: false
+                            });
+                        }
+                    });
+                }
+                
+                // Processa manutenções que afetam toda a cidade
+                if (cityWideSnapshot.exists()) {
+                    cityWideSnapshot.forEach(childSnapshot => {
+                        const maintenance = childSnapshot.val();
+                        const maintenanceStart = new Date(maintenance.startDate);
+                        const maintenanceEnd = maintenance.endDate ? new Date(maintenance.endDate) : new Date();
+                        
+                        if ((maintenanceStart <= endDate && maintenanceEnd >= startDate)) {
+                            maintenances.push({
+                                ...maintenance,
+                                id: childSnapshot.key,
+                                isCityWide: true
+                            });
+                        }
+                    });
+                }
 
-                    // Calcular descontos
-                    const discounts = calculateAllDiscounts(maintenances, osItems, tvValue, internetValue, startDate, endDate);
+                // Processar OS avulsas
+                const osItems = processOsItems();
 
-                    // Exibir resultados
-                    displayResults(discounts, tvValue, internetValue);
-                })
-                .catch(error => {
-                    console.error('Erro ao buscar manutenções:', error);
-                    alert('Erro ao calcular descontos. Por favor, verifique se as regras de segurança do Firebase estão configuradas corretamente.');
-                })
-                .finally(() => {
-                    // Esconde spinner e habilita botão
-                    calculateBtn.disabled = false;
-                    loadingSpinner.style.display = 'none';
-                });
+                // Calcular descontos
+                const discounts = calculateAllDiscounts(maintenances, osItems, tvValue, internetValue, startDate, endDate);
+
+                // Exibir resultados
+                displayResults(discounts, tvValue, internetValue);
+            })
+            .catch(error => {
+                console.error('Erro ao buscar manutenções:', error);
+                alert('Erro ao calcular descontos. Por favor, verifique se as regras de segurança do Firebase estão configuradas corretamente.');
+            })
+            .finally(() => {
+                // Esconde spinner e habilita botão
+                calculateBtn.disabled = false;
+                loadingSpinner.style.display = 'none';
+            });
         }
 
         function processOsItems() {
@@ -469,7 +496,8 @@
                         end: maintenance.endDate ? formatDateTime(maintenance.endDate) : 'Em andamento',
                         duration: formatDuration(durationMinutes),
                         tvDiscount: tvDiscount.toFixed(2),
-                        internetDiscount: internetDiscount.toFixed(2)
+                        internetDiscount: internetDiscount.toFixed(2),
+                        isCityWide: maintenance.isCityWide
                     });
                 }
             });
@@ -534,7 +562,7 @@
                     const item = document.createElement('div');
                     item.className = 'discount-item';
                     item.innerHTML = `
-                        <div><strong>Tipo:</strong> ${detail.type}</div>
+                        <div><strong>Tipo:</strong> ${detail.type} ${detail.isCityWide ? '(Toda Cidade)' : ''}</div>
                         <div><strong>Período:</strong> ${detail.start} até ${detail.end}</div>
                         <div class="time-diff"><strong>Duração:</strong> ${detail.duration}</div>
                         ${detail.tvDiscount > 0 ? `<div><strong>Desconto TV:</strong> R$ ${detail.tvDiscount}</div>` : ''}
