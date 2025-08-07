@@ -361,53 +361,25 @@
             calculateBtn.disabled = true;
             loadingSpinner.style.display = 'block';
 
-            // Buscar manutenções no Firebase - tanto para o bairro específico quanto para toda a cidade
-            const neighborhoodQuery = database.ref('maintenances')
-                .orderByChild('neighborhood')
-                .equalTo(neighborhood);
-            
-            const cityWideQuery = database.ref('maintenances')
-                .orderByChild('cityWide')
-                .equalTo(true);
-
-            // Executa ambas as consultas
-            Promise.all([
-                neighborhoodQuery.once('value'),
-                cityWideQuery.once('value')
-            ]).then(([neighborhoodSnapshot, cityWideSnapshot]) => {
+            // Buscar todas as manutenções e filtrar localmente
+            database.ref('maintenances').once('value').then(snapshot => {
                 const maintenances = [];
                 
-                // Processa manutenções do bairro específico
-                if (neighborhoodSnapshot.exists()) {
-                    neighborhoodSnapshot.forEach(childSnapshot => {
+                if (snapshot.exists()) {
+                    snapshot.forEach(childSnapshot => {
                         const maintenance = childSnapshot.val();
                         const maintenanceStart = new Date(maintenance.startDate);
                         const maintenanceEnd = maintenance.endDate ? new Date(maintenance.endDate) : new Date();
                         
+                        // Verifica se está no período selecionado
                         if ((maintenanceStart <= endDate && maintenanceEnd >= startDate)) {
-                            maintenances.push({
-                                ...maintenance,
-                                id: childSnapshot.key,
-                                isCityWide: false
-                            });
-                        }
-                    });
-                }
-                
-                // Processa manutenções que afetam toda a cidade (mesma cidade do bairro selecionado)
-                if (cityWideSnapshot.exists()) {
-                    cityWideSnapshot.forEach(childSnapshot => {
-                        const maintenance = childSnapshot.val();
-                        // Verifica se é da mesma cidade
-                        if (maintenance.city === city) {
-                            const maintenanceStart = new Date(maintenance.startDate);
-                            const maintenanceEnd = maintenance.endDate ? new Date(maintenance.endDate) : new Date();
-                            
-                            if ((maintenanceStart <= endDate && maintenanceEnd >= startDate)) {
+                            // Verifica se é do bairro selecionado OU se é uma manutenção que afeta toda a cidade
+                            if (maintenance.neighborhood === neighborhood || 
+                                (maintenance.isCityWide && maintenance.city === city)) {
                                 maintenances.push({
                                     ...maintenance,
                                     id: childSnapshot.key,
-                                    isCityWide: true
+                                    isCityWide: maintenance.isCityWide || false
                                 });
                             }
                         }
