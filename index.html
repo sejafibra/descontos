@@ -596,7 +596,10 @@
                     item.innerHTML = `
                         <div><strong>Tipo:</strong> ${detail.type} ${detail.isCityWide ? '(Toda Cidade)' : ''}</div>
                         <div><strong>Período:</strong> ${detail.start} até ${detail.end}</div>
-                        <div class="time-diff"><strong>Duração:</strong> ${detail.duration}</div>
+                        <div class="time-diff">
+    <strong>Duração:</strong> ${detail.duration}
+    ${isDurationOver24(detail.duration) ? '<span style="color:red; font-weight:bold; margin-left:10px;">Incomum - verificar se OS foi finalizada</span>' : ''}
+</div>
                         ${detail.tvDiscount > 0 ? `<div><strong>Desconto TV:</strong> R$ ${detail.tvDiscount}</div>` : ''}
                         ${detail.internetDiscount > 0 ? `<div><strong>Desconto Internet:</strong> R$ ${detail.internetDiscount}</div>` : ''}
                     `;
@@ -666,6 +669,20 @@
                 return `${remainingMinutes}min`;
             }
         }
+function isDurationOver24(durationString) {
+    // durationString vem no formato "Xh Ymin" ou "Zmin"
+    let hours = 0;
+    let minutes = 0;
+
+    const hourMatch = durationString.match(/(\d+)h/);
+    const minuteMatch = durationString.match(/(\d+)min/);
+
+    if (hourMatch) hours = parseInt(hourMatch[1]);
+    if (minuteMatch) minutes = parseInt(minuteMatch[1]);
+
+    return (hours * 60 + minutes) >= 1440; // 1440 minutos = 24h
+}
+
     </script>
 </body>
 </html>
